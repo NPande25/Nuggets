@@ -45,15 +45,10 @@ puts(grid);         // produces the output below
 #include <stdlib.h>
 #include <string.h>
 #include "player.h"
+#include "gridcell.h"
 
 /**************** file-local global variables ****************/
 /* none */
-
-/**************** local types ****************/
-typedef struct gridcell {
-  void* item;                 // pointer to data for this item
-  struct bagnode *next;       // link to next node
-} gridcell_t;
 
 /**************** global types ****************/
 typedef struct grid {
