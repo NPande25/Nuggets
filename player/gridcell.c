@@ -6,7 +6,7 @@
  * CecsC 2023
  */
 
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +23,20 @@ typedef struct gridcell {
   int y;                        //y position in grid
   int g;                        //amount of gold in place, 0 if none
   bool show;                    //if cell can be seen by player or not
+  //maybe add player variable
 } gridcell_t;
 
 
-gridcell_t*
+
+gridcell_t* gridcell_new(char c, int x, int y, int g, bool show) {
+
+    gridcell_t* gridcell = mem_malloc(sizeof(gridcell));
+    
+    gridcell->c = c;
+    gridcell->x = x;
+    gridcell->y = y;
+    gridcell->g = g;
+    gridcell->show = show;
+
+}
+

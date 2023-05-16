@@ -40,7 +40,7 @@ puts(grid);         // produces the output below
     puts(grid) will loop through gridCell array, if show, then put c, if !show, put blank space
 */
 
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
