@@ -17,7 +17,7 @@
 > This description should be independent of the programming language.
 
 
-### grid_t
+## grid_t
 
 module/struct that represents a specific instance of the map, which is to be initialized as a variable under each player_t and updated after each relevant keystroke input from players. The `grid_t` struct implements the following functions:
 
