@@ -11,10 +11,15 @@ In this document, we discuss our design decisions for the CS50 Nuggets game, whi
 *Major data structures
 *Testing plan, including unit tests, integration tests, system tests.
 
-
 Our design includes modules for `grid`, `gridcell`, and `player`. We describe each program and module separately. We do not describe the `support` library nor the modules that enable features that go beyond the spec. We avoid repeating information that is provided in the requirements spec.
 
 According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
+=======
+According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
+Our design also includes `player`, `grid`, and `gridcell` modules.
+We describe each program and module separately.
+We do not describe the `support` library nor the modules that enable features that go beyond the spec.
+We avoid repeating information that is provided in the requirements spec.
 
 ## Client
 
@@ -96,45 +101,41 @@ Modules:
 
 * message module (included): facilitates sending client input from stdin to the server
 
-There are no other modules other than the main module, facilitating functionality for player operations and differentiating between player & spectator functionality
+There are no othe modules other than the main module, facilitating functionality for player operations and differentiating between player & spectator functionality
  
 ### Pseudo code for logic/algorithmic flow
 
 The client will run as follows:
 
-	execute from a command line per the requirement spec
-	parse the command line, validate parameters
-	call initialize_client() to initialize required modules
-		initialize the 'message' module
-		verifies screen as per requirements 
-	call connect_client()
-		call message_send() to connect to server at port received
-	call message_loop() to handle incoming messages from server	
+call connect_client()
+call message_send() to connect to server at port received
+call message_loop() to handle incoming messages from server	
 		call handleInput(), await key strokes from player
-			call message_send() to send clean keystrokes to server
-		call handleMessage() to print grid and client info to terminal
+		call message_send() to send clean keystrokes to server
+	call handleMessage() to print grid and client info to terminal
 	terminate modules and clean up
 
 #### initialize_client()
-
-	initializes the `message` module
-	verify screen is sufficient for display as per requirments
-
+```
+  initializes the `message` module
+  verify screen is sufficient for display as per requirments
+```
 #### conncet_client()
-
-	sends message to server to verify connection, connecting at the specified port, and sending player name and type (player or spectator)
-
+```
+  sends message to server to verify connection, connecting at the specified port, and sends player name and type (player or spectator)
+```
 #### message_loop()
-
-	while termination from server or user not recieved 
-		takes handleInput() as a parameter to parse and send inputs to server
-		calls handleMessage() to print server messages to terminal such as game critical info and the grid
+```
+  while termination from server or user not recieved 
+	  takes handleInput() as a parameter to parse and send inputs to server
+  calls handleMessage() to print server messages to terminal such as game critical info and the grid
+```
 
 #### handleInput()
-
-	reads from stdin one line up to the maximum message length specified in requirements
-	calls message_send() to send keystroke to server
-
+```
+  reads from stdin one line up to the maximum message length specified in requirements
+  calls message_send() to send keystroke to server
+```
 ### Major data structures
 
 There are no major data structures in client outside of the c-library.
@@ -154,9 +155,7 @@ The first argument is the pathname for a map file and the second argument is an 
 
 ### Inputs and outputs
 *Input*: There are no inputs, only command-line parameters described above.
-
 *Output*: The server outputs a game summary including player names and scores when the game is over. The server also logs useful information to stderr.
-
 
 ### Functional decomposition into modules
 
@@ -225,9 +224,6 @@ print game over message
 for all players in game
 print player details
 ```
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> For example:
 
 The server will run as follows:
 
@@ -240,8 +236,11 @@ The server will run as follows:
 	call gameOver() to inform all clients the game has ended
 	clean up
 
+#### initializeGame()
+initializeGame sets up grid and drops gold piles into random cells. See IMPLEMENTATION.md for the pseudocode.
 
-> Then briefly describe each of the major functions, perhaps with level-4 #### headers.
+#### handMessage()
+handleMessage determines what the program will do based on the user keystrokes. See IMPLEMENTATION.md for pseudocode.
 
 ### Major data structures
 Grid
