@@ -355,10 +355,14 @@ int nuggets;
 
 module/struct that represents one player, which is to be initialized once a new client makes a connection and joins the game. Each player struct has the following functions:
 
-`player_new` (char c, char* name)
+`player_new(char c, char* name)`
+
 `void player_loadmap(player_t* player, char* map)`
+
 `void player_deactivate(player_t* player)`
+
 `void player_delete(player_t* player)`
+
 `void player_move(player_t* player, player_t* mover, char keystroke)` 
 
 
