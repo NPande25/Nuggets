@@ -1,16 +1,16 @@
 # CS50 Nuggets
 ## Design Spec
-### Team name, term, year
+### CecsC (Team 17), Spring, 2023
 
 > This **template** includes some gray text meant to explain how to use the template; delete all of them in your document!
 
 According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
-Our design also includes x, y, z modules.
+Our design also includes `player`, `grid`, and `gridcell` modules.
 We describe each program and module separately.
 We do not describe the `support` library nor the modules that enable features that go beyond the spec.
 We avoid repeating information that is provided in the requirements spec.
 
-## Player
+## Client
 
 > Teams of 3 students should delete this section.
 
@@ -53,26 +53,31 @@ See the requirements spec for both the command-line and interactive UI.
 ## Server
 ### User interface
 
-See the requirements spec for the command-line interface.
-There is no interaction with the user.
+As described in the Requirements Spec, the server’s only interface with the user is on the command-line; it must have one or two arguments.
+ 
+```
+$ ./server map.txt [seed]
+```
 
-> You may not need much more.
+The first argument is the pathname for a map file and the second argument is an optional seed for the random-number generator; if provided, the seed must be a positive integer.
 
 ### Inputs and outputs
+*Input*: There are no inputs, only command-line parameters described above.
 
-> Briefly describe the inputs (map file) and outputs (to terminal).
-> If you write to log files, or log to stderr, describe that here.
-> Command-line arguments are not 'input'.
+*Output*: The server outputs a game summary including player names and scores when the game is over. The server also logs useful information to stderr.
 
 ### Functional decomposition into modules
 
-> List and briefly describe any modules that comprise your server, other than the main module.
+We anticipate the following modules or functions:
+*main*, which parses arguments and initializes other modules
+*parseArgs*, which parses the command-line arguments
+*initializeGame*, which sets up the data structures, including dropping gold randomly in the map
+*handleMessage*, helper method for message_loop() that processes messages from clients
+*updatePlayers*, which updates all players whenever any player moves or gold is collected
+*updateClients*, which sends out updated map to all active clients after any player move
+*gameOver*, which sends out a summary that includes player names and scores when game is over
 
 ### Pseudo code for logic/algorithmic flow
-
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> For example:
 
 The server will run as follows:
 
@@ -85,14 +90,17 @@ The server will run as follows:
 	call gameOver() to inform all clients the game has ended
 	clean up
 
+#### initializeGame()
+initializeGame sets up grid and drops gold piles into random cells. See IMPLEMENTATION.md for the pseudocode.
 
-> Then briefly describe each of the major functions, perhaps with level-4 #### headers.
+#### handMessage()
+handleMessage determines what the program will do based on the user keystrokes. See IMPLEMENTATION.md for pseudocode.
 
 ### Major data structures
-
-> Describe each major data structure in this program: what information does it represent, how does it represent the data, and what are its members.
-> This description should be independent of the programming language.
-> Mention, but do not describe, data structures implemented by other modules (such as the new modules you detail below, or any libcs50 data structures you plan to use).
+Helper modules provide all the data structures we need:
+* *player* contains all the data needed for each player
+* *grid* contains the map
+* *gridcell* contains data for each cell in the grid
 
 ---
 
