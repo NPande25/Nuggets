@@ -33,13 +33,15 @@ See the requirements spec for both the command-line and interactive UI.
 
 ### Inputs and outputs
 
-The server runs from the command line, taking in 1 or 2 arguments:
+The client is launched from the command line, taking in 2 or 3 arguments:
 ```
-./server map.txt [seed] 
+./client hostname port [playername]
 ```
-`map.txt` corresponds to the map file the game will use. It must be a valid `.txt` file
+`hostname` IP address where the server is running
 
-`seed` (optional) is a seed for the random number generator. It must be a random integer.
+`port` Port number on which the server expects messages
+
+`playername` (optional) If supplied, used as the players name. The client flags a missing playername, instead joining as a spectator
 
 #### Inputs
 
@@ -90,49 +92,48 @@ When the game terminates, or an error arises, the log file is saved.
 
 ### Functional decomposition into modules
 
-> List and briefly describe any modules that comprise your client, other than the main module.
-
 Modules:
 
 * message module (included): facilitates sending client input from stdin to the server
 
-There are no othe modules other than the main module, facilitating functionality for player operations and differentiating between player & spectator functionality
+There are no other modules other than the main module, facilitating functionality for player operations and differentiating between player & spectator functionality
  
 ### Pseudo code for logic/algorithmic flow
-
-> For each function write pseudocode indented by a tab, which in Markdown will cause it to be rendered in literal form (like a code block).
-> Much easier than writing as a bulleted list!
-> See the Server section for an example.
 
 The client will run as follows:
 
 	execute from a command line per the requirement spec
 	parse the command line, validate parameters
 	call initialize_client() to initialize required modules
-	initialize the 'message' module
-	verifies screen as per requirements 
-call connect_client()
-		call message_loop() to handle incoming messages from server
-call message_send() to connect to server at port received	
-	call game_loop(), await key strokes from player
-		call message_send() to send clean keystrokes to server
-		call display() to print grid and client info to terminal
+		initialize the 'message' module
+		verifies screen as per requirements 
+	call connect_client()
+		call message_send() to connect to server at port received
+	call message_loop() to handle incoming messages from server	
+		call handleInput(), await key strokes from player
+			call message_send() to send clean keystrokes to server
+		call handleMessage() to print grid and client info to terminal
 	terminate modules and clean up
 
 #### initialize_client()
 
-* initializes the `message` module
-* verify screen is sufficient for display as per requirments
+	initializes the `message` module
+	verify screen is sufficient for display as per requirments
 
 #### conncet_client()
 
-* message_loop() handles incoming messages from the server, initially awaiting server port to connect
-* sends message to server to verify connection, connecting at the specified port, and sends player name and type (player or spectator)
+	sends message to server to verify connection, connecting at the specified port, and sending player name and type (player or spectator)
 
-#### game_loop()
+#### message_loop()
 
-* reads from stdin one character at a time until termination from server or client
-* calls display() to print grid from server into terminal
+	while termination from server or user not recieved 
+		takes handleInput() as a parameter to parse and send inputs to server
+		calls handleMessage() to print server messages to terminal such as game critical info and the grid
+
+#### handleInput()
+
+	reads from stdin one line up to the maximum message length specified in requirements
+	calls message_send() to send keystroke to server
 
 ### Major data structures
 
