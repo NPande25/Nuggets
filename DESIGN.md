@@ -106,15 +106,20 @@ There are no othe modules other than the main module, facilitating functionality
 ### Pseudo code for logic/algorithmic flow
 
 The client will run as follows:
-
-call connect_client()
-call message_send() to connect to server at port received
-call message_loop() to handle incoming messages from server	
+```
+	execute from a command line per the requirement spec
+	parse the command line, validate parameters
+	call initialize_client() to initialize required modules
+		initialize the 'message' module
+		verifies screen as per requirements 
+	call connect_client()
+		call message_send() to connect to server at port received
+	call message_loop() to handle incoming messages from server	
 		call handleInput(), await key strokes from player
-		call message_send() to send clean keystrokes to server
-	call handleMessage() to print grid and client info to terminal
+			call message_send() to send clean keystrokes to server
+		call handleMessage() to print grid and client info to terminal
 	terminate modules and clean up
-
+```
 #### initialize_client()
 ```
   initializes the `message` module
