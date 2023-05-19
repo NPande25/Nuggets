@@ -347,7 +347,7 @@ int x;
 int y;
 bool show;
 int nuggets;
-```\GIT
+```
 
 ### player_t*
 
