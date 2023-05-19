@@ -307,6 +307,7 @@ use gridcell_setGold to put the gold into the gridcell
 ```
 
 **grid_isVisible**
+```
 Calculate the difference between the player's position and the target cell's position
 Divide the distance into smaller steps
 Calculate the step sizes
@@ -318,6 +319,7 @@ For each step from 0 to numSteps - 1:
    If it's not the first step (i > 0), calculate the previous position (prevX, prevY) by subtracting the step sizes from the current position.
    Check if both the previous cell (prevX, prevY) and the current cell (x, y) are walls in the map. If they are, it means the path is blocked on both sides, so consider the cell not visible and return false.
 If no intersections with walls were found during the loop, consider the cell visible and return true.
+```
 
 ### Major data structures
 No major data structures from libcs50 are used in `grid_t`. However, we implement a `gridcell_t` helper module that populates each cell in the grid. This is outlined below.
