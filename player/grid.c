@@ -62,12 +62,7 @@ grid_t* grid_new(int NR, int NC) {
   grid_t* grid = (grid_t*)malloc(sizeof(grid_t));
   
   // Allocate memory for the rows of the gridarray
-  grid->gridarray = (gridcell_t**)malloc(NR * sizeof(gridcell_t*));
-
-  // Allocate memory for each column of the gridarray
-  for (int i = 0; i < NR; i++) {
-    new_grid->gridarray[i] = (gridcell_t*)malloc(NC * sizeof(gridcell_t*));
-  }
+  grid->gridarray = (gridcell_t**)malloc(NR * NC * sizeof(gridcell_t*));
 
   // Return the initialized grid
   return grid;

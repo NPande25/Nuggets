@@ -48,7 +48,45 @@ void player_deactivate(player_t* player) {
     active = false;
     return;
   }
+}
 
-  if (player->active )
+void player_delete(player_t* player) {
+
+  if (player->grid != NULL) {
+    grid_delete(player->grid);
+  }
+  if (player != NULL) {
+    mem_free(player);
+  }
+}
+
+void player_move(player_t* player, player_t* mover, char keystroke) {
+
+  //if valid keystroke {
+
+    if (player->c == mover->c) {
+
+      //move 'c' character based on game logic + walls
+      grid_move(player->grid, player_t* mover, char keystroke)                //note: not written yet
+
+    } else {
+      grid_move(player->grid, player_t* mover, char keystroke)                //note: not written yet
+
+      grid_update_visibility(player->grid, player_t* player)                  //note: not written yet
+    }
+    
+
+  //}
 
 }
+
+/*
+
+if valid keystroke
+  if player != mover
+      modify where mover character is on player's grid based on keystroke
+  if player == mover
+	  modify where '@' symbol is on player's grid based on keystroke
+	update visibility based on movement
+  
+  */
