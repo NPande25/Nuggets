@@ -52,7 +52,9 @@ puts(grid);         // produces the output below
 
 /**************** global types ****************/
 typedef struct grid {
-  gridcell_t** gridarray;       // head of the list of items in bag
+  gridcell_t** gridarray;       // array of gridcells in the grid
+  int NR;                       // number of rows
+  int NC;                       // number of columns
 } grid_t;
 
 
