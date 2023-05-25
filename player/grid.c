@@ -45,14 +45,17 @@ puts(grid);         // produces the output below
 #include <stdlib.h>
 #include <string.h>
 #include "player.h"
-#include "gridcell.h"
+// #include "grid.h"
+#include "file.h"
+#include "mem.h"
 
 /**************** file-local global variables ****************/
 /* none */
 
 /**************** global types ****************/
 typedef struct grid {
-  gridcell_t** gridarray;       // array of gridcells in the grid
+  // gridcell_t** gridarray;       // array of gridcells in the grid
+  char* map;
   int NR;                       // number of rows
   int NC;                       // number of columns
 } grid_t;
@@ -61,16 +64,63 @@ typedef struct grid {
 //display consists of NR+1, NC (to fit text header)                 //note: do i need to allocate here or within gridcell_new?
 grid_t* grid_new(int NR, int NC) {
   // Allocate memory for the grid structure
-  grid_t* grid = (grid_t*)malloc(sizeof(grid_t));
+  grid_t* grid = mem_assert(malloc(sizeof(grid_t)), "grid memory error");
   
   // Allocate memory for the rows of the gridarray
-  grid->gridarray = (gridcell_t**)malloc(NR * NC * sizeof(gridcell_t*));
+  // grid->gridarray = mem_assert(malloc(NR * NC * sizeof(gridcell_t*)), "gridarray memory error");
 
   // Return the initialized grid
   return grid;
 }
 
-//loads given map into grid
-void grid_load(grid_t* grid, char* map) {
-  
+
+
+//loads given file into grid
+void grid_load(grid_t* grid, char* pathName) 
+{
+  if (grid == NULL || pathName == NULL) {
+      fprintf(stderr, "Null grid or Pathname");
+      return;
+  }
+
+  FILE* fp;
+  fp = fopen(pathName, "r");
+  if (fp == NULL) {
+    fprintf(stderr, "Failed to open file: %s\n", pathName);
+    return;
+  }
+   
+  // get number of rows
+  char* lineOne = file_readLine(fp);
+  int numCols = strlen(lineOne);
+  grid->NC = numCols;
+  rewind(fp);
+
+  //get number 
+  int numRows = file_numLines(fp);
+  grid->NR = numRows;
+
+  char* map = malloc(numRows*numCols + 1); // string of all the characters in the map
+  char* line;
+  for (int i = 0; (line = file_readLine(fp)) != NULL; i++) {
+    for (int j = 0; j < numCols; j++) {
+      char c = line[j];
+      strncat(map, &c, 1);
+    }
+  }
+  map[numRows*numCols] = '\0';
+
+  printf("%s\n", map);
+  printf("%d\n%d\n", grid->NR, grid->NC);
+
+  fclose(fp);
+
+
 }
+
+int main()
+ {
+  grid_t* grid = grid_new(0, 0);
+  grid_load(grid, "../maps/small.txt");
+
+ }

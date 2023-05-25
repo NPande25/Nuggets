@@ -34,18 +34,18 @@ grid_t* grid_new(int NR, int NC);
 /*
 * loads char map into grid initializing gridcells?
 */
-grid_load( grid_t* grid, FILE* map);
+void grid_load(grid_t* grid, char* pathName);
 
-grid_set( grid_t* grid, int x, int y, char c);
+// grid_set( grid_t* grid, int x, int y, char c);
 
-char* grid_iterate(grid_t* grid, void* arg, (*itemfunc)());
+// char* grid_iterate(grid_t* grid, void* arg, (*itemfunc)());
 
-grid_generateGold(grid_t* grid)
+// grid_generateGold(grid_t* grid)
 
-grid_updateGold(grid_t* grid)
+// grid_updateGold(grid_t* grid)
 
-grid_getGold(grid_t* grid)
+// grid_getGold(grid_t* grid)
 
-grid_isVisible(grid_t* grid)
+// grid_isVisible(grid_t* grid)
 
-grid_delete(grid_t* grid )
+// grid_delete(grid_t* grid )

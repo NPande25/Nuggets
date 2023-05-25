@@ -21,22 +21,31 @@ typedef struct gridcell {
   char c;                       // actual makeup of cell
   int x;                        // x position in grid
   int y;                        //y position in grid
-  int g;                        //amount of gold in place, 0 if none
+  int gold;                        //amount of gold in place, 0 if none
   bool show;                    //if cell can be seen by player or not
   //maybe add player variable
 } gridcell_t;
 
 
 
-gridcell_t* gridcell_new(char c, int x, int y, int g, bool show) {
+gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show) 
+{
+  gridcell_t* gridcell = mem_malloc(sizeof(gridcell_t));
+  
+  gridcell->c = c;
+  gridcell->x = x;
+  gridcell->y = y;
+  gridcell->gold = gold;
+  gridcell->show = show;
 
-    gridcell_t* gridcell = mem_malloc(sizeof(gridcell));
-    
-    gridcell->c = c;
-    gridcell->x = x;
-    gridcell->y = y;
-    gridcell->g = g;
-    gridcell->show = show;
+}
 
+void gridcell_delete(gridcell_t* gridcell)
+{
+  if (gridcell != NULL) {
+    fprintf(stderr, "Null gridcell to delete");
+  } else {
+    free(gridcell);
+  }
 }
 
