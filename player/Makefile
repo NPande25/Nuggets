@@ -17,17 +17,9 @@ LIB = $(L)/libcs50.a
 LIB1 = $(LL)/support.a
 
 # programs
-PROG = grid
-PROG1 = gridcell
-OBJS = grid.o
-OBJS1 = gridcell.o
+PROG = gridtest
 
 
-$(PROG): $(OBJS) $(LIB1) $(LIB)
-	$(CC) $(CFLAGS) $^ -lm -o $@
-
-
-$(PROG1): $(OBJS1) $(LIB1) $(LIB)
-	# $(CC) $(CFLAGS) $^ -lm -o $@
+grid.o: grid.h
 
 gridcell.o: gridcell.h

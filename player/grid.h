@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "player.h"
+#include "file.h"
+#include "mem.h"
 #include "gridcell.h"
 
 /*
@@ -36,7 +38,7 @@ grid_t* grid_new(int NR, int NC);
 */
 void grid_load(grid_t* grid, char* pathName);
 
-// grid_set( grid_t* grid, int x, int y, char c);
+void grid_set(grid_t* grid, int x, int y, char c);
 
 // char* grid_iterate(grid_t* grid, void* arg, (*itemfunc)());
 
@@ -48,4 +50,4 @@ void grid_load(grid_t* grid, char* pathName);
 
 // grid_isVisible(grid_t* grid)
 
-// grid_delete(grid_t* grid )
+void grid_delete(grid_t* grid );
