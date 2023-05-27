@@ -44,7 +44,7 @@ puts(grid);         // produces the output below
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "player.h"
+#include <math.h>
 #include "grid.h"
 #include "file.h"
 #include "mem.h"
@@ -76,7 +76,7 @@ grid_t* grid_new(int NR, int NC) {
 
 
 
-//loads given file into grid
+/* loads given file into grid. See 'grid.h' for more info. */
 void grid_load(grid_t* grid, char* pathName) 
 {
   // check arguments
@@ -98,6 +98,7 @@ void grid_load(grid_t* grid, char* pathName)
   int numCols = strlen(lineOne);
   grid->NC = numCols;
   rewind(fp);
+  free(lineOne);
 
   //get number of rows
   int numRows = file_numLines(fp);
@@ -105,32 +106,49 @@ void grid_load(grid_t* grid, char* pathName)
 
   // for each character, concatenate to end of string with strncat
   char* map = malloc(numRows*numCols + 1); // string of all the characters in the map
+  map[0] = '\0'; // initialize with null terminator
   char* line;
   for (int i = 0; (line = file_readLine(fp)) != NULL; i++) {
     for (int j = 0; j < numCols; j++) {
       char c = line[j];
       strncat(map, &c, 1);
     }
+    free(line);
   }
-  map[numRows*numCols] = '\0'; // add null character to the end
 
-  printf("%s\n", map);
-  printf("%d\n%d\n", grid->NR, grid->NC);
+  grid->map = map; // store this character string in map member
+  // free(map);
+
+  // DEBUGGING
+  // printf("%s\n", map);
+  // printf("%d\n%d\n", grid->NR, grid->NC);
 
   fclose(fp);
 
-
+  // for each character, create gridcell and put into grid array 
+  for (int i = 0; i < strlen(map); i++) {
+    gridcell_t* gridcell = gridcell_new(map[i], i % numCols, (int) ceil(i / numCols), 0, false);
+    grid->gridarray[i] = gridcell;
+  }
 }
 
+/* set a gridcell at a certain location x,y to a certain character c. See 'grid.h' for more info */
 void grid_set(grid_t* grid, int x, int y, char c)
 {
   if (grid == NULL || x < 0 || y < 0) {
     fprintf(stderr, "One or more grid_set args is null");
   }
 
-  int idx = grid->NC * (y-1) + x - 1;
+ // calculate index by # of cols * y value + x value
+  int idx = grid->NC * y + x;
 
   gridcell_set(grid->gridarray[idx], c);
+  grid->map[idx] = c;
+}
+
+void grid_print(grid_t* grid)
+{
+  printf("%s", grid->map);
 }
 
 void grid_delete(grid_t* grid)
@@ -141,6 +159,7 @@ void grid_delete(grid_t* grid)
     gridcell_delete(grid->gridarray[i]);
   }
 
+  free(grid->map);
   free(grid->gridarray);
   free(grid);
  }
