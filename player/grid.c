@@ -63,12 +63,12 @@ typedef struct grid {
 
 
 //display consists of NR+1, NC (to fit text header)                 //note: do i need to allocate here or within gridcell_new?
-grid_t* grid_new(int NR, int NC) {
+grid_t* grid_new() {
   // Allocate memory for the grid structure
   grid_t* grid = mem_assert(malloc(sizeof(grid_t)), "grid memory error");
   
   // Allocate memory for the rows of the gridarray
-  grid->gridarray = mem_assert(malloc(NR * NC * sizeof(gridcell_t*)), "gridarray memory error");
+  // grid->gridarray = mem_assert(malloc(NR * NC * sizeof(gridcell_t*)), "gridarray memory error");
 
   // Return the initialized grid
   return grid;
@@ -104,15 +104,40 @@ void grid_load(grid_t* grid, char* pathName)
   int numRows = file_numLines(fp);
   grid->NR = numRows;
 
+  // DEBUGGING
+  fprintf(stdout, "%d, %d\n", numRows, numCols);
+
+  // allocate for gridarray
+  grid->gridarray = mem_assert(malloc(numRows * numCols * sizeof(gridcell_t*)), "gridarray memory error");
+
+
   // for each character, concatenate to end of string with strncat
-  char* map = malloc(numRows*numCols + 1); // string of all the characters in the map
+  char* map = malloc((numRows)*(numCols+1) + 1); // string of all the characters in the map
   map[0] = '\0'; // initialize with null terminator
   char* line;
+  char newLine = '\n';
+  int totalIdx = 0;
   for (int i = 0; (line = file_readLine(fp)) != NULL; i++) {
+    // fprintf(stdout, "%s\n", line);
+
     for (int j = 0; j < numCols; j++) {
       char c = line[j];
-      strncat(map, &c, 1);
+      // fprintf(stdout, "%c\n", c);
+      strncat(map, &c, 1);   // add to map
+      
+      // create new gridcell at the approprate (x,y)
+      gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) ceil(totalIdx / numCols), 0, false);
+      grid->gridarray[totalIdx] = gridcell;
+      if (c == '-' || c == '|' || c == '+' || c == '#') {
+        gridcell_setWall(gridcell, true);
+      } else {
+        gridcell_setWall(gridcell, false);
+      }
+
+      totalIdx++;
     }
+
+    strncat(map, &newLine, 1);
     free(line);
   }
 
@@ -125,11 +150,7 @@ void grid_load(grid_t* grid, char* pathName)
 
   fclose(fp);
 
-  // for each character, create gridcell and put into grid array 
-  for (int i = 0; i < strlen(map); i++) {
-    gridcell_t* gridcell = gridcell_new(map[i], i % numCols, (int) ceil(i / numCols), 0, false);
-    grid->gridarray[i] = gridcell;
-  }
+
 }
 
 /* set a gridcell at a certain location x,y to a certain character c. See 'grid.h' for more info */
@@ -137,18 +158,189 @@ void grid_set(grid_t* grid, int x, int y, char c)
 {
   if (grid == NULL || x < 0 || y < 0) {
     fprintf(stderr, "One or more grid_set args is null");
+  } else {
+
+  // calculate index by # of cols * y value + x value
+    int idx = grid->NC * y + x;
+
+    gridcell_set(grid->gridarray[idx], c);
+    grid->map[idx] = c;
+  }
+}
+
+void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* item))
+{
+  if (grid == NULL || (*itemfunc) == NULL) {
+    fprintf(stderr, "One or more 'iterate' arguments is NULL");
+  } else {
+    for (int i = 0; i < (grid->NR * grid->NC); i++) {
+      (*itemfunc)(arg, grid->gridarray[i]);
+    }
   }
 
- // calculate index by # of cols * y value + x value
-  int idx = grid->NC * y + x;
+}
 
-  gridcell_set(grid->gridarray[idx], c);
-  grid->map[idx] = c;
+
+
+bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
+{
+  if (grid == NULL || player == NULL || target == NULL) {
+    fprintf(stderr, "One or more visibility arguments is NULL");
+    return false;
+  }
+
+
+  int startX = gridcell_getX(player);       // 0
+  int startY = gridcell_getY(player);       // 0
+
+  int endX = gridcell_getX(target);         // 2
+  int endY = gridcell_getY(target);         // 3
+
+  int dx = endX - startX;                   // 2
+  int dy = endY - startY;                   // 3
+
+  if (dx == 0 && dy > 0) { // vertical line, going down
+    for (int y = startY + 1; y < endY; y++) {
+      gridcell_t* g = grid_get(grid, startX, y);
+      if (gridcell_isWall(g)) {
+        return false;
+      }
+    }
+    // if you go down the line and it doesn't hit a wall, return true
+    return true;
+  }
+
+  if (dx == 0 && dy < 0) { // vertical line, going up
+    for (int y = startY - 1; y > endY; y--) {
+      gridcell_t* g = grid_get(grid, startX, y);
+      if (gridcell_isWall(g)) {
+        return false;
+      }
+    }
+    // if you go down the line and it doesn't hit a wall, return true
+    return true;
+  }
+
+  if (dy == 0 && dx > 0) { // horizontal line, going right
+    for (int x = startX + 1; x < endX; x++) {
+      gridcell_t* g = grid_get(grid, x, startY);
+      if (gridcell_isWall(g)) {
+        return false;
+      }
+    }
+    // if you go down the line and it doesn't hit a wall, return true
+    return true;
+  }
+
+  if (dy == 0 && dx < 0) { // horizontal line, going left
+    for (int x = startX - 1; x > endX; x--) {
+      gridcell_t* g = grid_get(grid, x, startY);
+      if (gridcell_isWall(g)) {
+        return false;
+      }
+    }
+    // if you go down the line and it doesn't hit a wall, return true
+    return true;
+  }
+  int incrX;
+  int incrY;
+  if (dx > 0) { // moving left
+    incrX = 1;
+  } else { // moving right
+    incrX = -1;
+  }
+
+  if (dy > 0) {
+    incrY = 1;
+  } else {
+    incrY = -1;
+  }
+
+  // DEBUG
+  printf("Passed line test\n");
+
+  // how each value will be incremented in the loops
+  double stepX = (double)dx / dy;
+  double stepY = (double)dy / dx;          // 
+
+  // LOOP 1: X VALUES
+  for (int x = startX + incrX; x != endX; x += incrX) { // if dx < 0 (moving left), then 
+    // calculate y
+    double y = startY + (x - startX) * stepY;   // 3/2  ----> point = (1,3/2)
+
+    // calculate the two points we need to check. Points are (x, underY) and (x, overY)
+    int underY = floor(y);  // 1
+    int overY = ceil(y);    // 2
+    // printf("%f with stepY = %f: %d, %d\n", y, stepY, underY, overY);
+
+    // calculate indices for these points
+    int underIdx = grid->NC * underY + x;
+    int overIdx = grid->NC * overY + x; 
+
+    gridcell_t* underG = grid->gridarray[underIdx];
+    gridcell_t* overG = grid->gridarray[overIdx];
+    printf("Checking over %d,%d\n", gridcell_getX(underG), gridcell_getY(underG));
+    printf("Checking under %d,%d\n", gridcell_getX(overG), gridcell_getY(overG));
+
+    // check if both are wall
+    if (gridcell_isWall(underG) && gridcell_isWall(overG)) {
+      return false;
+    }
+  }
+
+  printf("Passed X for loop\n");
+
+  // LOOP 2: Y VALUES
+  for (int y = startY + incrY; y != endY; y += incrY) {
+    double x = startX + (y - startY) * stepX; // 2/3 -----> point = (2/3)
+
+    // calculate two points (underX, y) and (overX, y)
+    int underX = floor(x);  // 0
+    int overX = ceil(x);   // 1
+
+    // indices in gridarray
+    int underIdy = grid->NC * y + underX;
+    int overIdy = grid->NC * y + overX;
+
+    gridcell_t* underg = grid->gridarray[underIdy];
+    gridcell_t* overg = grid->gridarray[overIdy];
+    printf("Checking over %d,%d\n", gridcell_getX(underg), gridcell_getY(underg));
+    printf("Checking under %d,%d\n", gridcell_getX(overg), gridcell_getY(overg));
+
+    if (gridcell_isWall(underg) && gridcell_isWall(overg)) {
+      return false;
+    }
+  }
+
+  return true;
+
+}
+
+
+
+gridcell_t* grid_get(grid_t* grid, int x, int y)
+{
+  if (grid == NULL || x < 0 || y < 0) {
+    fprintf(stderr, "Invalid arguments for grid_get");
+    return NULL;
+  }
+
+  // calculate idx
+  int idx = grid->NC * y + x;
+  return grid->gridarray[idx];
 }
 
 void grid_print(grid_t* grid)
 {
-  printf("%s", grid->map);
+  printf("%s\n", grid->map);
+
+  // // checking if isWall works
+  // for (int i = 0; i < grid->NR * grid->NC; i++) {
+    // printf("%c", gridcell_getC(grid->gridarray[i]));
+    // printf("\n");
+    // bool wall = gridcell_isWall(grid->gridarray[i]);
+    // printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
+  // }
 }
 
 void grid_delete(grid_t* grid)
