@@ -30,14 +30,16 @@ typedef struct grid grid_t;
 
 /******** grid_new **************
  * creates grid and allocates for grid, gridarray, and all gridcells within it
- * 
- * 
+ * inputs:
+ *     NR - number of rows
+ *     NC - number of cols UPDATE OSINVOSIFLBNVOAIDBNOADGINBAOIDGB
+ * output:
+ *     grid struct that was created
+ * notes:
+ *     caller must later free the grid struct via grid_delete()
  */
-grid_t* grid_new(int NR, int NC);
+grid_t* grid_new();
 
-/*
-* loads char map into grid initializing gridcells?
-*/
 
 /********** grid_load *********
  * Load a grid from a file specified by the path name. The file represents 
@@ -52,6 +54,7 @@ grid_t* grid_new(int NR, int NC);
  * Note:
  *    The grid structure must be allocated before calling this function.
  *    The file should contain characters representing the grid, with each character corresponding to a cell in the grid.
+ *    The file is assumed to be a valid rectangular map
  */
 void grid_load(grid_t* grid, char* pathName);
 
@@ -70,10 +73,35 @@ void grid_load(grid_t* grid, char* pathName);
  */
 void grid_set(grid_t* grid, int x, int y, char c);
 
+/******** grid_get *******
+ * gets a gridcell in the grid at a certain (x,y) location
+ * 
+ * Inputs:
+ *     grid - grid in which we are getting a gridcell
+ *     x - x position of gridcell to get
+ *     y - y position
+ * outputs:
+ *     pointer to the gridcell at the corresponding location
+ */
+gridcell_t* grid_get(grid_t* grid, int x, int y);
+
+/******** grid_print *********
+ * prints the char* map of the grid
+ * used for debugging
+ */
 void grid_print(grid_t* grid);
 
-
-// char* grid_iterate(grid_t* grid, void* arg, (*itemfunc)());
+/******** grid_iterate *********
+ * iterate over all the gridcells in the grid
+ * 
+ * inputs: 
+ *     grid - grid over which we're iterating
+ *     arg - pointer to an object passed in, if necessary
+ *     (*itemfunc) - function that acts on the gridcells
+ * outputs:
+ *     the itemfunc function is performed on every gridcell, which are modified in the grid
+ */
+void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* item));
 
 // grid_generateGold(grid_t* grid)
 
@@ -81,7 +109,23 @@ void grid_print(grid_t* grid);
 
 // grid_getGold(grid_t* grid)
 
-// grid_isVisible(grid_t* grid)
+
+/********** grid_isVisible **************
+ * determine if a target gridcell is visible from a player gridcell.
+ * 
+ * inputs:
+ *     grid - grid in which we are determining visibility. Need this to check other gridcells in between.
+ *     player - gridcell where the player is
+ *     target - target gridcell. Is the target gridcell visible from the player?
+ * outputs:
+ *     bool - true if it's visible. False if not.
+ * notes:
+ *     pseudocode for this function is in IMPLEMENTATION.md and is not repeated here
+ *     function is memory-neutral
+ */
+bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
+
+
 
 
 /********** grid_delete ************

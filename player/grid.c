@@ -126,7 +126,9 @@ void grid_load(grid_t* grid, char* pathName)
       strncat(map, &c, 1);   // add to map
       
       // create new gridcell at the approprate (x,y)
-      gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) ceil(totalIdx / numCols), 0, false);
+      // math: x = number of characters so far (totalIdx) $mod$ numCols
+      // y = totalIdx / numCols, rounded down (by casting as int)
+      gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) (totalIdx / numCols), 0, false);
       grid->gridarray[totalIdx] = gridcell;
       if (c == '-' || c == '|' || c == '+' || c == '#') {
         gridcell_setWall(gridcell, true);
@@ -334,13 +336,13 @@ void grid_print(grid_t* grid)
 {
   printf("%s\n", grid->map);
 
-  // // checking if isWall works
-  // for (int i = 0; i < grid->NR * grid->NC; i++) {
+  // checking if isWall works
+  for (int i = 0; i < grid->NR * grid->NC; i++) {
     // printf("%c", gridcell_getC(grid->gridarray[i]));
     // printf("\n");
-    // bool wall = gridcell_isWall(grid->gridarray[i]);
-    // printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
-  // }
+    bool wall = gridcell_isWall(grid->gridarray[i]);
+    printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
+  }
 }
 
 void grid_delete(grid_t* grid)

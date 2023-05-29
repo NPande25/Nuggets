@@ -89,7 +89,17 @@ int gridcell_getY(gridcell_t* gridcell)
     return 0;
   }
 
-    return gridcell->y;
+  return gridcell->y;
+}
+
+int gridcell_getGold(gridcell_t* gridcell)
+{
+  if (gridcell == NULL) {
+    fprintf(stderr, "gridcell null in gridcell_getGold");
+    return 0;
+  }
+
+  return gridcell->gold;
 }
 
 void gridcell_setWall(gridcell_t* gridcell, bool isWall)
