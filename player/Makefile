@@ -18,8 +18,17 @@ LIB1 = $(LL)/support.a
 
 # programs
 PROG = gridtest
+OBJS = grid.o
 
+gridtest: gridtest.c grid.o gridcell.o $(LIB) $(LIB1)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+gridtest.o: gridtest.c grid.h
 
 grid.o: grid.h
 
 gridcell.o: gridcell.h
+
+clean:
+	rm -f gridtest
+	rm -f *.o
