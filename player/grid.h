@@ -126,6 +126,22 @@ void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* ite
 bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
 
 
+/********** grid_playerVisibility ***********
+ * create a string with the visibility for a player, replacing
+ * invisible cells with ' '
+ * 
+ * inputs:
+ *     grid - grid of interest
+ *     player - gridcell where the player is  ----- UPDATE THIS
+ * output:
+ *     char* - string with only the visible characters
+ * note:
+ *     caller is responsible for freeing the string later on
+ */
+char* grid_playerVisibility(grid_t* grid, gridcell_t* player);
+
+void grid_generateGold(grid_t* grid, int minPiles, int maxPiles);
+
 
 
 /********** grid_delete ************

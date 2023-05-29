@@ -62,7 +62,7 @@ typedef struct grid {
 } grid_t;
 
 
-//display consists of NR+1, NC (to fit text header)                 //note: do i need to allocate here or within gridcell_new?
+/* create new grid. See 'grid.h' for more info */
 grid_t* grid_new() {
   // Allocate memory for the grid structure
   grid_t* grid = mem_assert(malloc(sizeof(grid_t)), "grid memory error");
@@ -104,9 +104,6 @@ void grid_load(grid_t* grid, char* pathName)
   int numRows = file_numLines(fp);
   grid->NR = numRows;
 
-  // DEBUGGING
-  fprintf(stdout, "%d, %d\n", numRows, numCols);
-
   // allocate for gridarray
   grid->gridarray = mem_assert(malloc(numRows * numCols * sizeof(gridcell_t*)), "gridarray memory error");
 
@@ -118,7 +115,6 @@ void grid_load(grid_t* grid, char* pathName)
   char newLine = '\n';
   int totalIdx = 0;
   for (int i = 0; (line = file_readLine(fp)) != NULL; i++) {
-    // fprintf(stdout, "%s\n", line);
 
     for (int j = 0; j < numCols; j++) {
       char c = line[j];
@@ -144,15 +140,8 @@ void grid_load(grid_t* grid, char* pathName)
   }
 
   grid->map = map; // store this character string in map member
-  // free(map);
-
-  // DEBUGGING
-  // printf("%s\n", map);
-  // printf("%d\n%d\n", grid->NR, grid->NC);
 
   fclose(fp);
-
-
 }
 
 /* set a gridcell at a certain location x,y to a certain character c. See 'grid.h' for more info */
@@ -183,7 +172,7 @@ void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* ite
 }
 
 
-
+/* check if a terget gridcell is visible from the player gridcell. See 'grid.h' for more info */
 bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
 {
   if (grid == NULL || player == NULL || target == NULL) {
@@ -200,6 +189,10 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
 
   int dx = endX - startX;                   // 2
   int dy = endY - startY;                   // 3
+
+  if (dx == 0 && dy == 0) { // same point
+    return true;
+  }
 
   if (dx == 0 && dy > 0) { // vertical line, going down
     for (int y = startY + 1; y < endY; y++) {
@@ -219,7 +212,7 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
         return false;
       }
     }
-    // if you go down the line and it doesn't hit a wall, return true
+    // if you go up the line and it doesn't hit a wall, return true
     return true;
   }
 
@@ -230,7 +223,7 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
         return false;
       }
     }
-    // if you go down the line and it doesn't hit a wall, return true
+    // if you go right along the line and don't hit a wall, return true
     return true;
   }
 
@@ -241,32 +234,31 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
         return false;
       }
     }
-    // if you go down the line and it doesn't hit a wall, return true
+    // if you go left along the line and don't hit a wall, return true
     return true;
   }
+
   int incrX;
   int incrY;
-  if (dx > 0) { // moving left
+  if (dx > 0) { // x values move left
     incrX = 1;
-  } else { // moving right
+  } else {      // moving right
     incrX = -1;
   }
 
-  if (dy > 0) {
+  if (dy > 0) { // y values moving down
     incrY = 1;
-  } else {
+  } else {      // moving up
     incrY = -1;
   }
 
-  // DEBUG
-  printf("Passed line test\n");
-
   // how each value will be incremented in the loops
   double stepX = (double)dx / dy;
-  double stepY = (double)dy / dx;          // 
+  double stepY = (double)dy / dx;
 
-  // LOOP 1: X VALUES
-  for (int x = startX + incrX; x != endX; x += incrX) { // if dx < 0 (moving left), then 
+  // LOOP 1 - x VALUES: for each integer x value in between startx and endx (exclusive),
+  // calculate (double) y value and check the cells above and below for isWall
+  for (int x = startX + incrX; x != endX; x += incrX) { // if dx > 0 (moving right), then x++; if dx < 0, x--
     // calculate y
     double y = startY + (x - startX) * stepY;   // 3/2  ----> point = (1,3/2)
 
@@ -281,8 +273,6 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
 
     gridcell_t* underG = grid->gridarray[underIdx];
     gridcell_t* overG = grid->gridarray[overIdx];
-    printf("Checking over %d,%d\n", gridcell_getX(underG), gridcell_getY(underG));
-    printf("Checking under %d,%d\n", gridcell_getX(overG), gridcell_getY(overG));
 
     // check if both are wall
     if (gridcell_isWall(underG) && gridcell_isWall(overG)) {
@@ -290,9 +280,8 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
     }
   }
 
-  printf("Passed X for loop\n");
-
-  // LOOP 2: Y VALUES
+  // LOOP 2 - Y VALUES: for each integer y value in between startY and endY (exclusive),
+  // calculate x value and check the cells left and right for isWall
   for (int y = startY + incrY; y != endY; y += incrY) {
     double x = startX + (y - startY) * stepX; // 2/3 -----> point = (2/3)
 
@@ -306,19 +295,80 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
 
     gridcell_t* underg = grid->gridarray[underIdy];
     gridcell_t* overg = grid->gridarray[overIdy];
-    printf("Checking over %d,%d\n", gridcell_getX(underg), gridcell_getY(underg));
-    printf("Checking under %d,%d\n", gridcell_getX(overg), gridcell_getY(overg));
+
 
     if (gridcell_isWall(underg) && gridcell_isWall(overg)) {
       return false;
     }
   }
 
-  return true;
+  return true; // if walls have not been hit in any loop, it's visible
 
 }
 
+/*
+ * in the future, second argument will be player_t* player
+ * then, instead of gridcell_t* player, we just start off with:
+ * gridcell_t* g = grid_get(grid, player_get_x(player), player_get_y(player))
+ */
+char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
+{
+  if (grid == NULL || player == NULL) {
+    fprintf(stderr, "Null argument(s) in grid_playerVisibility");
+    return NULL;
+  }
 
+  // gridcell_t* player = grid_get(grid, player_get_x(player), player_get_y(player))
+  // printf("%d, %d\n", gridcell_getX(player), gridcell_getY(player));
+  // printf("%s\n", grid->map);
+
+  // NEED ???????
+  int x = gridcell_getX(player);
+  int y = gridcell_getY(player);
+
+  char* vis = mem_assert(malloc(grid->NR * (grid->NC + 1) + 1), "Visibility string mem error");
+  vis[0] = '\0'; // initialize with null character
+  char newLine = '\n';
+  char invisible = ' ';
+  char at = '@';
+
+  for (int i = 0; i < grid->NC * grid->NR; i++) {
+    gridcell_t* g = grid->gridarray[i];
+    bool show = grid_isVisible(grid, player, g); // check visibility
+
+    char c = gridcell_getC(g);
+    if (show) { // if visible, add to string
+      if (i == grid->NC * y + x) {
+        strncat(vis, &at, 1);
+      } else {
+        strncat(vis, &c, 1);
+      }
+    } else {
+      strncat(vis, &invisible, 1);
+    }
+
+    if (((i+1) % grid-> NC) == 0) { // if we're at the end of the row, add newLine char
+      strncat(vis, &newLine, 1);
+    }
+  }
+  return vis;
+}
+
+void grid_generateGold(grid_t* grid, int minPiles, int maxPiles)
+{
+  if (grid != NULL && minPiles > 0 && maxPiles > minPiles) {
+    // get random integer
+    int range = maxPiles - minPiles;
+    int r = rand() * range + minPiles; // fits random number in between minPiles and maxPiles
+
+    r = 4;
+
+    for (int i = 0; i < r; i++) {
+      int randInt; // random integer from 0 to grid->NC * grid->NR
+      grid->
+    }
+  }
+}
 
 gridcell_t* grid_get(grid_t* grid, int x, int y)
 {
@@ -337,12 +387,12 @@ void grid_print(grid_t* grid)
   printf("%s\n", grid->map);
 
   // checking if isWall works
-  for (int i = 0; i < grid->NR * grid->NC; i++) {
-    // printf("%c", gridcell_getC(grid->gridarray[i]));
-    // printf("\n");
-    bool wall = gridcell_isWall(grid->gridarray[i]);
-    printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
-  }
+  // for (int i = 0; i < grid->NR * grid->NC; i++) {
+  //   printf("%c", gridcell_getC(grid->gridarray[i]));
+  //   printf("\n");
+  //   bool wall = gridcell_isWall(grid->gridarray[i]);
+  //   printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
+  // }
 }
 
 void grid_delete(grid_t* grid)
