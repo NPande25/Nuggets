@@ -98,6 +98,16 @@ void gridcell_setWall(gridcell_t* gridcell, bool isWall);
  */
 bool gridcell_isWall(gridcell_t* gridcell);
 
+/******** gridcell_setShow *******
+ * set show boolean for specific gridcell
+ * input:
+ *     gridcell - gridcell of interest
+ * output:
+ *     gridcell->show becomes what you set it too (show)
+ */
+void gridcell_setShow(gridcell_t* gridcell, bool show);
+
+
 /******** gridcell_print *******
  * print gridcell's character
  * input:

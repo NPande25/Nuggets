@@ -115,11 +115,20 @@ bool gridcell_isWall(gridcell_t* gridcell)
 {
   if (gridcell == NULL) {
     fprintf(stderr, "gridcell null in gridcell_isWall");
+    return false;
   }
 
   return gridcell->isWall;
 }
 
+void gridcell_setShow(gridcell_t* gridcell, bool show) {
+  if (gridcell == NULL) {
+    fprintf(stderr, "gridcell null in gridcell_isWall");
+  } else {
+    gridcell->show = show;
+  }
+
+}
 
 void gridcell_print(gridcell_t* gridcell)
 {

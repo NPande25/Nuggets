@@ -343,6 +343,7 @@ char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
       } else {
         strncat(vis, &c, 1);
       }
+      gridcell_setShow(g, true);
     } else {
       strncat(vis, &invisible, 1);
     }
