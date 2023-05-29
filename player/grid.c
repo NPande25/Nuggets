@@ -131,6 +131,12 @@ void grid_load(grid_t* grid, char* pathName)
         gridcell_setWall(gridcell, false);
       }
 
+      if (c == '.') {
+        gridcell_setRoom(gridcell, true);
+      } else {
+        gridcell_setRoom(gridcell, false);
+      }
+
       totalIdx++;
     }
 

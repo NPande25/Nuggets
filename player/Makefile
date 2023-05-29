@@ -29,6 +29,8 @@ grid.o: grid.h
 
 gridcell.o: gridcell.h
 
+player.o: player.h
+
 clean:
 	rm -f gridtest
 	rm -f *.o

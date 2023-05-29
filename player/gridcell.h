@@ -13,6 +13,13 @@
 #include "mem.h"
 
 // Gridcell struct
+/*
+ *  char c;             // actual makeup of cell
+ * int x;               // x position in grid
+ * int y;               // y position in grid
+ * int gold;            //amount of gold in place, 0 if none
+ * bool show;           //if cell can be seen by player or not
+ */
 typedef struct gridcell gridcell_t;
 
 // functions
@@ -117,6 +124,23 @@ bool gridcell_isWall(gridcell_t* gridcell);
  *     gridcell->show becomes what you set it too (show)
  */
 void gridcell_setShow(gridcell_t* gridcell, bool show);
+
+/******* gridcell_setRoom ********
+ * set whether or not a gridcell is in a room
+ * inputs:
+ *     gridcell - gridcell of interest
+ *     room - whether or not it's in a room
+ */
+void gridcell_setRoom(gridcell_t* gridcell, bool room);
+
+/******* gridcell_setRoom ********
+ * check whether or not a gridcell is in a room
+ * inputs:
+ *     gridcell - gridcell of interest
+ * outputs:
+ *     bool - whether or not it's in a room
+ */
+bool gridcell_getRoom(gridcell_t* gridcell);
 
 
 /******** gridcell_print *******

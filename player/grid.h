@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <math.h>
 #include "file.h"
+#include "player.h"
 #include "mem.h"
 #include "gridcell.h"
 

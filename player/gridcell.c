@@ -29,13 +29,14 @@ typedef struct gridcell {
   int y;                        //y position in grid
   int gold;                        //amount of gold in place, 0 if none
   bool show;                    //if cell can be seen by player or not
+  bool room;
   bool isWall;
   //maybe add player variable
 } gridcell_t;
 
 
 
-gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show) 
+gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show, bool room) 
 {
   // check args
   if (x < 0 || y < 0 || gold < 0) {
@@ -50,6 +51,7 @@ gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show)
   gridcell->y = y;
   gridcell->gold = gold;
   gridcell->show = show;
+  gridcell->room = room;
 
   return gridcell;
 }
@@ -137,6 +139,25 @@ void gridcell_setShow(gridcell_t* gridcell, bool show) {
     gridcell->show = show;
   }
 
+}
+
+void gridcell_setRoom(gridcell_t* gridcell, bool room)
+{
+  if (gridcell == NULL) {
+    fprintf(stderr, "gridcell null in gridcell_setRoom");
+  } else {
+    gridcell->room = room;
+  }
+}
+
+bool gridcell_getRoom(gridcell_t* gridcell)
+{
+  if (gridcell == NULL) {
+    fprintf(stderr, "gridcell null in gridcell_getRoom");
+    return false;
+  } else {
+    return gridcell->room;
+  }
 }
 
 void gridcell_print(gridcell_t* gridcell)
