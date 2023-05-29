@@ -54,6 +54,25 @@ void player_delete(player_t* player) {
 }
 
 
+void player_playerVisibility(player_t* player, grid_t* grid)
+{
+  if (grid == NULL || player == NULL) {
+    fprintf(stderr, "Null argument(s) in player_playerVisibility");
+  } else {
+
+    gridcell_t* g = grid_get(grid, player_get_x(player), player_get_y(player))
+
+
+    for (int i = 0; i < grid->NC * grid->NR; i++) {
+      if (!player->boolgrid[i]) { // if it's false in the bool grid (we don't have to worry about true, can't turn to false)
+        gridcell_t* g1 = grid->gridarray[i];
+        bool show = grid_isVisible(grid, g, g1); // check visibility
+        player_set_boolGrid(player, i, show); // set that in the boolGrid
+      }
+    }
+  }
+}
+
 /***** GETTER / SETTER FUNCTIONS *****/
 addr_t player_get_addr(player_t* player) {
 
