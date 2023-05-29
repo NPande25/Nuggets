@@ -71,6 +71,17 @@ int gridcell_getY(gridcell_t* gridcell);
  */
 char gridcell_getC(gridcell_t* gridcell);
 
+
+/******** gridcell_setGold *******
+ * set amount of gold in a gridcell
+ * input:
+ *     gridcell - gridcell of interest
+ * output:
+ *     changes gridcell->gold
+ */
+void gridcell_setGold(gridcell_t* gridcell, int gold);
+
+
 /******** gridcell_getGold *******
  * get amount of gold in a gridcell
  * input:

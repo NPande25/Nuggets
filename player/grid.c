@@ -44,8 +44,10 @@ puts(grid);         // produces the output below
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <math.h>
 #include "grid.h"
+#include "player.h"
 #include "file.h"
 #include "mem.h"
 #include "gridcell.h"
@@ -66,9 +68,6 @@ typedef struct grid {
 grid_t* grid_new() {
   // Allocate memory for the grid structure
   grid_t* grid = mem_assert(malloc(sizeof(grid_t)), "grid memory error");
-  
-  // Allocate memory for the rows of the gridarray
-  // grid->gridarray = mem_assert(malloc(NR * NC * sizeof(gridcell_t*)), "gridarray memory error");
 
   // Return the initialized grid
   return grid;
@@ -331,6 +330,7 @@ char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
   char newLine = '\n';
   char invisible = ' ';
   char at = '@';
+  char gold = '*';
 
   for (int i = 0; i < grid->NC * grid->NR; i++) {
     gridcell_t* g = grid->gridarray[i];
@@ -340,10 +340,17 @@ char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
     if (show) { // if visible, add to string
       if (i == grid->NC * y + x) {
         strncat(vis, &at, 1);
+      } else if (gridcell_getGold(g) > 0) {
+        strncat(vis, &gold, 1);
       } else {
         strncat(vis, &c, 1);
       }
       gridcell_setShow(g, true);
+
+      // set player->boolgrid[i] = true
+
+
+
     } else {
       strncat(vis, &invisible, 1);
     }
@@ -355,19 +362,37 @@ char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
   return vis;
 }
 
-void grid_generateGold(grid_t* grid, int minPiles, int maxPiles)
+/* create the gold piles in a grid. see 'grid.h' for more info */
+void grid_generateGold(grid_t* grid, int minPiles, int maxPiles, int goldTotal)
 {
   if (grid != NULL && minPiles > 0 && maxPiles > minPiles) {
     // get random integer
     int range = maxPiles - minPiles;
-    int r = rand() * range + minPiles; // fits random number in between minPiles and maxPiles
+    srand(getpid());
+    int numPiles = rand() % range + minPiles; // fits random number in between minPiles and maxPiles
+    printf("Piles: %d\n", numPiles);
 
-    r = 4;
+    int goldLeft = goldTotal;
+    int i = 0;
+    while (i < numPiles) {
+      int randLocation = rand() % (grid->NC * grid->NR); // random integer from 0 to grid->NC * grid->NR
+      gridcell_t* goldTarget = grid->gridarray[randLocation];
 
-    for (int i = 0; i < r; i++) {
-      int randInt; // random integer from 0 to grid->NC * grid->NR
-      grid->
+      if (gridcell_getC(goldTarget) == '.') { // if gridcell is blank and in a room
+
+        int goldAmt = rand() % (goldLeft - (numPiles - i)) + 1;
+        if (i == numPiles - 1) {
+          goldAmt = goldLeft;
+        }
+        printf("i = %d, goldamt = %d, goldLeft = %d\n", i, goldAmt, goldLeft);
+
+        gridcell_setGold(goldTarget, goldAmt);
+
+        goldLeft -= goldAmt;
+        i++;
+      }
     }
+    printf("%d\n", goldLeft);
   }
 }
 
@@ -388,12 +413,11 @@ void grid_print(grid_t* grid)
   printf("%s\n", grid->map);
 
   // checking if isWall works
-  // for (int i = 0; i < grid->NR * grid->NC; i++) {
+  for (int i = 0; i < grid->NR * grid->NC; i++) {
   //   printf("%c", gridcell_getC(grid->gridarray[i]));
-  //   printf("\n");
-  //   bool wall = gridcell_isWall(grid->gridarray[i]);
-  //   printf("Wall: %d, At: (%2d, %2d), Char: %c\n", wall, gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]));
-  // }
+    // printf("\n");
+    // printf("At: (%2d, %2d), Char: %c, Gold: %d\n", gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]), gridcell_getGold(grid->gridarray[i]));
+  }
 }
 
 void grid_delete(grid_t* grid)

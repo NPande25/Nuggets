@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <math.h>
 #include "file.h"
 #include "mem.h"
@@ -103,11 +104,7 @@ void grid_print(grid_t* grid);
  */
 void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* item));
 
-// grid_generateGold(grid_t* grid)
 
-// grid_updateGold(grid_t* grid)
-
-// grid_getGold(grid_t* grid)
 
 
 /********** grid_isVisible **************
@@ -140,8 +137,24 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
  */
 char* grid_playerVisibility(grid_t* grid, gridcell_t* player);
 
-void grid_generateGold(grid_t* grid, int minPiles, int maxPiles);
+/********* grid_generateGold ***********
+ * create a random number of gold piles in a grid, between minPiles and maxPiles
+ * 
+ * inputs:
+ *     grid - grid into which we're putting gold
+ *     minPiles - minimum number of piles for randomization
+ *     maxPiles - maximum number of piles
+ *     goldTotal - int value for the total amount of gold between all piles
+ * outputs:
+ *     gridcell->gold value is increased for the cells that are randomly selected
+ *
+ */
+void grid_generateGold(grid_t* grid, int minPiles, int maxPiles, int goldTotal);
 
+
+// grid_updateGold(grid_t* grid)
+
+// grid_getGold(grid_t* grid)
 
 
 /********** grid_delete ************
