@@ -152,7 +152,6 @@ void grid_load(grid_t* grid, char* pathName)
 
     for (int j = 0; j < numCols; j++) {
       char c = line[j];
-      // fprintf(stdout, "%c\n", c);
       strncat(map, &c, 1);   // add to map
       
       // create new gridcell at the approprate (x,y)
@@ -164,6 +163,12 @@ void grid_load(grid_t* grid, char* pathName)
         gridcell_setWall(gridcell, true);
       } else {
         gridcell_setWall(gridcell, false);
+      }
+
+      if (c == '.') {
+        gridcell_setRoom(gridcell, true);
+      } else {
+        gridcell_setRoom(gridcell, false);
       }
 
       totalIdx++;
@@ -197,7 +202,7 @@ void grid_set(grid_t* grid, int x, int y, char c)
 void grid_update_map(grid_t* grid) {
   int totalCells = (grid->NC) * (grid->NR);
   mem_free(grid->map);
-  grid->map = (char*) mem_malloc(sizeof(char) * (totalCells + NR));
+  grid->map = (char*) mem_malloc(sizeof(char) * (totalCells + grid->NR));
   int index = 0;
   for (int i = 0; i < totalCells; i++) {
 
@@ -207,7 +212,7 @@ void grid_update_map(grid_t* grid) {
     index++;
 
     //at end of row?
-    if (((i+1) % NC) == 0) {
+    if (((i+1) % grid->NC) == 0) {
       grid->map[index] = '\n';
       index++;
     }

@@ -235,6 +235,8 @@ char* player_get_string(player_t* player, grid_t* grid) {
         } else {
           map[index] = '.';
         }
+      } else if (c == player_get_c(player)) {
+        map[index] = '@';
       } else {
         map[index] = c;
       }

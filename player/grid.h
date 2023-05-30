@@ -41,11 +41,24 @@ typedef struct grid grid_t;
  */
 grid_t* grid_new();
 
-
+/******* grid_get_NR ******
+ * get number of rows
+ * input: grid of interest
+ */
 int grid_get_NR(grid_t* grid);
 
+/******* grid_get_NC ******
+ * get number of cols
+ * input: grid of interest
+ */
 int grid_get_NC(grid_t* grid);
 
+/******* grid_get_gridarray ******
+ * get a gridcell from the gridarray
+ * input: 
+ *     grid of interest
+ *     index at which the gridcell is
+ */
 gridcell_t* grid_get_gridarray(grid_t* grid, int idx);
 
 
@@ -101,6 +114,14 @@ gridcell_t* grid_get(grid_t* grid, int x, int y);
  */
 void grid_print(grid_t* grid);
 
+/*********** grid_update_map ***********
+ * recreates the map string after it has changed
+ * 
+ * input:
+ *     grid - grid whose string we are working with
+ * output:
+ *     Old grid->map freed. New string stored into grid->map.
+ */
 void grid_update_map(grid_t* grid);
 
 
