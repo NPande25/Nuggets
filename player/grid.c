@@ -158,7 +158,7 @@ void grid_load(grid_t* grid, char* pathName)
       // create new gridcell at the approprate (x,y)
       // math: x = number of characters so far (totalIdx) $mod$ numCols
       // y = totalIdx / numCols, rounded down (by casting as int)
-      gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) (totalIdx / numCols), 0, false);
+      gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) (totalIdx / numCols), 0, false, false);
       grid->gridarray[totalIdx] = gridcell;
       if (c == '-' || c == '|' || c == '+' || c == '#') {
         gridcell_setWall(gridcell, true);
