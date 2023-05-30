@@ -41,6 +41,28 @@ typedef struct grid grid_t;
  */
 grid_t* grid_new();
 
+/******* grid_get_NR ******
+ * get number of rows
+ * input: grid of interest
+ */
+int grid_get_NR(grid_t* grid);
+
+/******* grid_get_NC ******
+ * get number of cols
+ * input: grid of interest
+ */
+int grid_get_NC(grid_t* grid);
+
+/******* grid_get_gridarray ******
+ * get a gridcell from the gridarray
+ * input: 
+ *     grid of interest
+ *     index at which the gridcell is
+ */
+gridcell_t* grid_get_gridarray(grid_t* grid, int idx);
+
+
+
 
 /********** grid_load *********
  * Load a grid from a file specified by the path name. The file represents 
@@ -92,6 +114,17 @@ gridcell_t* grid_get(grid_t* grid, int x, int y);
  */
 void grid_print(grid_t* grid);
 
+/*********** grid_update_map ***********
+ * recreates the map string after it has changed
+ * 
+ * input:
+ *     grid - grid whose string we are working with
+ * output:
+ *     Old grid->map freed. New string stored into grid->map.
+ */
+void grid_update_map(grid_t* grid);
+
+
 /******** grid_iterate *********
  * iterate over all the gridcells in the grid
  * 
@@ -123,19 +156,7 @@ void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* ite
 bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
 
 
-/********** grid_playerVisibility ***********
- * create a string with the visibility for a player, replacing
- * invisible cells with ' '
- * 
- * inputs:
- *     grid - grid of interest
- *     player - gridcell where the player is  ----- UPDATE THIS
- * output:
- *     char* - string with only the visible characters
- * note:
- *     caller is responsible for freeing the string later on
- */
-char* grid_playerVisibility(grid_t* grid, gridcell_t* player);
+
 
 /********* grid_generateGold ***********
  * create a random number of gold piles in a grid, between minPiles and maxPiles

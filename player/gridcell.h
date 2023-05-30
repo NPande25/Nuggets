@@ -13,6 +13,13 @@
 #include "mem.h"
 
 // Gridcell struct
+/*
+ *  char c;             // actual makeup of cell
+ * int x;               // x position in grid
+ * int y;               // y position in grid
+ * int gold;            //amount of gold in place, 0 if none
+ * bool show;           //if cell can be seen by player or not
+ */
 typedef struct gridcell gridcell_t;
 
 // functions
@@ -25,12 +32,13 @@ typedef struct gridcell gridcell_t;
  *     y - y position
  *     gold - the amount of gold there
  *     show - boolean: is this visible?
+ *     room - boolean: is this cell in a room?
  * outputs:
  *     a new gridcell struct
  * notes:
  *     caller must later free this via gridcell_delete()
  */
-gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show);
+gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show, bool room);
 
 
 /********* GETTER AND SETTER METHODS FOR GRIDCELLS **********/
@@ -117,6 +125,23 @@ bool gridcell_isWall(gridcell_t* gridcell);
  *     gridcell->show becomes what you set it too (show)
  */
 void gridcell_setShow(gridcell_t* gridcell, bool show);
+
+/******* gridcell_setRoom ********
+ * set whether or not a gridcell is in a room
+ * inputs:
+ *     gridcell - gridcell of interest
+ *     room - whether or not it's in a room
+ */
+void gridcell_setRoom(gridcell_t* gridcell, bool room);
+
+/******* gridcell_setRoom ********
+ * check whether or not a gridcell is in a room
+ * inputs:
+ *     gridcell - gridcell of interest
+ * outputs:
+ *     bool - whether or not it's in a room
+ */
+bool gridcell_getRoom(gridcell_t* gridcell);
 
 
 /******** gridcell_print *******
