@@ -23,7 +23,6 @@ void player_delete(player_t* player);
  *     player - gridcell where the player is  ----- UPDATE THIS
  * output:
  *     boolGrid is updated accordingly
-
  */
 void player_playerVisibility(player_t* player, grid_t* grid);
 
