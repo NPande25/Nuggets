@@ -101,6 +101,9 @@ gridcell_t* grid_get(grid_t* grid, int x, int y);
  */
 void grid_print(grid_t* grid);
 
+void grid_update_map(grid_t* grid);
+
+
 /******** grid_iterate *********
  * iterate over all the gridcells in the grid
  * 

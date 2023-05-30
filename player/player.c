@@ -211,7 +211,6 @@ void player_deactivate(player_t* player) {
 
   if (player->active == true) {
     player->active = false;
-    return;
   }
 }
 

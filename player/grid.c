@@ -101,6 +101,15 @@ gridcell_t* grid_get_gridarray(grid_t* grid, int idx)
   }
 }
 
+char* grid_get_map(grid_t* grid) {
+  if (grid == NULL) {
+    fprintf(stderr, "Grid null in grid_get_map");
+    return NULL;
+  } else {
+    return grid->map;
+  }
+}
+
 /* loads given file into grid. See 'grid.h' for more info. */
 void grid_load(grid_t* grid, char* pathName) 
 {
@@ -181,6 +190,28 @@ void grid_set(grid_t* grid, int x, int y, char c)
 
     gridcell_set(grid->gridarray[idx], c);
     grid->map[idx] = c;
+  }
+}
+
+//gives the map string to print given a grid
+void grid_update_map(grid_t* grid) {
+  int totalCells = (grid->NC) * (grid->NR);
+  mem_free(grid->map);
+  grid->map = (char*) mem_malloc(sizeof(char) * (totalCells + NR));
+  int index = 0;
+  for (int i = 0; i < totalCells; i++) {
+
+    gridcell_t* cell = grid->gridarray[i];
+    char c = gridcell_getC(cell);
+    grid->map[index] = c;
+    index++;
+
+    //at end of row?
+    if (((i+1) % NC) == 0) {
+      grid->map[index] = '\n';
+      index++;
+    }
+
   }
 }
 
