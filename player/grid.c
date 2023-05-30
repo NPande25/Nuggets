@@ -47,7 +47,6 @@ puts(grid);         // produces the output below
 #include <unistd.h>
 #include <math.h>
 #include "grid.h"
-#include "player.h"
 #include "file.h"
 #include "mem.h"
 #include "gridcell.h"
@@ -73,7 +72,34 @@ grid_t* grid_new() {
   return grid;
 }
 
+int grid_get_NR(grid_t* grid) {
 
+  if (grid == NULL) {
+    fprintf(stderr, "grid null in grid_get_NR\n");
+    return 0;
+  } else {
+    return grid->NR;
+  }
+}
+
+int grid_get_NC(grid_t* grid) {
+
+  if (grid == NULL) {
+    fprintf(stderr, "grid null in grid_get_NC\n");
+    return 0;
+  } else {
+    return grid->NC;
+  }
+}
+
+gridcell_t* grid_get_gridarray(grid_t* grid, int idx)
+{
+  if (grid != NULL && idx >= 0) {
+    return grid->gridarray[idx];
+  } else {
+    return NULL;
+  }
+}
 
 /* loads given file into grid. See 'grid.h' for more info. */
 void grid_load(grid_t* grid, char* pathName) 
@@ -129,12 +155,6 @@ void grid_load(grid_t* grid, char* pathName)
         gridcell_setWall(gridcell, true);
       } else {
         gridcell_setWall(gridcell, false);
-      }
-
-      if (c == '.') {
-        gridcell_setRoom(gridcell, true);
-      } else {
-        gridcell_setRoom(gridcell, false);
       }
 
       totalIdx++;
@@ -311,62 +331,6 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
 
 }
 
-/*
- * in the future, second argument will be player_t* player
- * then, instead of gridcell_t* player, we just start off with:
- * gridcell_t* g = grid_get(grid, player_get_x(player), player_get_y(player))
- */
-char* grid_playerVisibility(grid_t* grid, gridcell_t* player)
-{
-  if (grid == NULL || player == NULL) {
-    fprintf(stderr, "Null argument(s) in grid_playerVisibility");
-    return NULL;
-  }
-
-  // gridcell_t* player = grid_get(grid, player_get_x(player), player_get_y(player))
-  // printf("%d, %d\n", gridcell_getX(player), gridcell_getY(player));
-  // printf("%s\n", grid->map);
-
-  // NEED ???????
-  int x = gridcell_getX(player);
-  int y = gridcell_getY(player);
-
-  char* vis = mem_assert(malloc(grid->NR * (grid->NC + 1) + 1), "Visibility string mem error");
-  vis[0] = '\0'; // initialize with null character
-  char newLine = '\n';
-  char invisible = ' ';
-  char at = '@';
-  char gold = '*';
-
-  for (int i = 0; i < grid->NC * grid->NR; i++) {
-    gridcell_t* g = grid->gridarray[i];
-    bool show = grid_isVisible(grid, player, g); // check visibility
-
-    char c = gridcell_getC(g);
-    if (show) { // if visible, add to string
-      if (i == grid->NC * y + x) {
-        strncat(vis, &at, 1);
-      } else if (gridcell_getGold(g) > 0) {
-        strncat(vis, &gold, 1);
-      } else {
-        strncat(vis, &c, 1);
-      }
-      gridcell_setShow(g, true);
-
-      // set player->boolgrid[i] = true
-
-
-
-    } else {
-      strncat(vis, &invisible, 1);
-    }
-
-    if (((i+1) % grid-> NC) == 0) { // if we're at the end of the row, add newLine char
-      strncat(vis, &newLine, 1);
-    }
-  }
-  return vis;
-}
 
 /* create the gold piles in a grid. see 'grid.h' for more info */
 void grid_generateGold(grid_t* grid, int minPiles, int maxPiles, int goldTotal)

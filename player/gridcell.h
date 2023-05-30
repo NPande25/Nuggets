@@ -32,12 +32,13 @@ typedef struct gridcell gridcell_t;
  *     y - y position
  *     gold - the amount of gold there
  *     show - boolean: is this visible?
+ *     room - boolean: is this cell in a room?
  * outputs:
  *     a new gridcell struct
  * notes:
  *     caller must later free this via gridcell_delete()
  */
-gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show);
+gridcell_t* gridcell_new(char c, int x, int y, int gold, bool show, bool room);
 
 
 /********* GETTER AND SETTER METHODS FOR GRIDCELLS **********/

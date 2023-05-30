@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "mem.h"
 #include "grid.h"
 #include "message.h"
 
@@ -12,6 +13,19 @@ typedef struct player player_t;
 player_t* player_new(char c, char* name, const addr_t addr, int NR, int NC);
 
 void player_delete(player_t* player);
+
+/********** player_playerVisibility ***********
+ * create a string with the visibility for a player, replacing
+ * invisible cells with ' '
+ * 
+ * inputs:
+ *     grid - grid of interest
+ *     player - gridcell where the player is  ----- UPDATE THIS
+ * output:
+ *     boolGrid is updated accordingly
+
+ */
+void player_playerVisibility(player_t* player, grid_t* grid);
 
 addr_t player_get_addr(player_t* player);
 

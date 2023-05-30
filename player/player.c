@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "mem.h"
+#include "grid.h"
 #include "message.h"
 
 /**************** global types ****************/
@@ -21,16 +23,22 @@ typedef struct player {
   int x;                //location
   int y;                //location
   bool active;          //still in or has quit?
-  const addr_t addr;    //address of client corresponding to player
+  addr_t addr;    //address of client corresponding to player
 } player_t;
 
-player_t* player_new(char c, char* name, const addr_t addr, int NR, int NC) {                               //note: should they get a grid loaded in?
+// IMPLICIT DECLARATIONS
+int player_get_x(player_t* player);
+int player_get_y(player_t* player);
 
-    player_t* player = mem_mallocc(sizeof(player_t));
+
+
+player_t* player_new(char c, char* name, addr_t addr, int NR, int NC) {                               //note: should they get a grid loaded in?
+
+    player_t* player = mem_malloc(sizeof(player_t));
 
     player->boolGrid = mem_malloc(sizeof(bool) * (NR * NC));  
-    for (int i = 0; i < (NR * NC; i++)) {
-    boolGrid[i] = false;
+    for (int i = 0; i < (NR * NC); i++) {
+      player->boolGrid[i] = false;
     }
 
     player->c = c;
@@ -40,13 +48,15 @@ player_t* player_new(char c, char* name, const addr_t addr, int NR, int NC) {   
     player->y = 0;
     player->active = true;                                                      //note should not start active yet?
     player->addr = addr;
+
+    return player;
 }
 
 
 void player_delete(player_t* player) {
 
   if (player->boolGrid != NULL) {
-    mem_free(boolGrid);
+    mem_free(player->boolGrid);
   }
   if (player != NULL) {
     mem_free(player);
@@ -60,14 +70,14 @@ void player_playerVisibility(player_t* player, grid_t* grid)
     fprintf(stderr, "Null argument(s) in player_playerVisibility");
   } else {
 
-    gridcell_t* g = grid_get(grid, player_get_x(player), player_get_y(player))
+    gridcell_t* g = grid_get(grid, player_get_x(player), player_get_y(player));
 
 
-    for (int i = 0; i < grid->NC * grid->NR; i++) {
-      if (!player->boolgrid[i]) { // if it's false in the bool grid (we don't have to worry about true, can't turn to false)
-        gridcell_t* g1 = grid->gridarray[i];
+    for (int i = 0; i < grid_get_NC(grid) * grid_get_NR(grid); i++) {
+      if (!player->boolGrid[i]) { // if it's false in the bool grid (we don't have to worry about true, can't turn to false)
+        gridcell_t* g1 = grid_get_gridarray(grid, i);
         bool show = grid_isVisible(grid, g, g1); // check visibility
-        player_set_boolGrid(player, i, show); // set that in the boolGrid
+        player->boolGrid[i] = show; // set that in the boolGrid
       }
     }
   }
@@ -76,29 +86,27 @@ void player_playerVisibility(player_t* player, grid_t* grid)
 /***** GETTER / SETTER FUNCTIONS *****/
 addr_t player_get_addr(player_t* player) {
 
-  if (player != NULL && player->addr != NULL) {
-    return player->addr;
-  } else {
-    fprintf(stderr, "player or player address is null\n");
-  }
+  return player->addr;
 }
 
 
-grid_t* player_get_boolGrid(player_t* player, int index) {
+bool player_get_boolGrid(player_t* player, int index) {
 
   if (player != NULL && player->boolGrid != NULL) {
     return player->boolGrid[index];
   } else {
     fprintf(stderr, "player or player boolgrid is null\n");
+    return false;
   }
 }
 
 char player_get_c(player_t* player) {
 
-  if (player != NULL && player->c != NULL) {
+  if (player != NULL) {
     return player->c;
   } else {
     fprintf(stderr, "player or player c is null\n");
+    return '\0';
   }
 }
 
@@ -108,6 +116,7 @@ char* player_get_name(player_t* player) {
     return player->name;
   } else {
     fprintf(stderr, "player or player name is null\n");
+    return NULL;
   }
 }
 
@@ -117,6 +126,7 @@ int player_get_score(player_t* player) {
     return player->score;
   } else {
     fprintf(stderr, "player or player score is null\n");
+    return -1;
   }
 }
 
@@ -126,6 +136,7 @@ int player_get_x(player_t* player) {
     return player->x;
   } else {
     fprintf(stderr, "player or player x coord is null\n");
+    return -1;
   }
 }
 
@@ -135,6 +146,7 @@ int player_get_y(player_t* player) {
     return player->y;
   } else {
     fprintf(stderr, "player or player y coord is null\n");
+    return -1;
   }
 }
 
@@ -142,13 +154,16 @@ bool player_is_active(player_t* player) {
 
   if (player != NULL) {
     return player->active;
+  } else {
+    fprintf(stderr, "player is null in _is_active");
+    return false;
   }
 }
 
 
 void player_set_c(player_t* player, char c) {
 
-  if (player != NULL && c != NULL) {
+  if (player != NULL) {
     player->c = c;
   }
 }
@@ -195,7 +210,7 @@ void player_set_y(player_t* player, int y) {
 void player_deactivate(player_t* player) {
 
   if (player->active == true) {
-    active = false;
+    player->active = false;
     return;
   }
 }
@@ -203,7 +218,7 @@ void player_deactivate(player_t* player) {
 char* player_get_string(player_t* player, grid_t* grid) {
 
   int totalCells = (grid_get_NC(grid)) * (grid_get_NR(grid));
-  char* map = mem_malloc(sizeof(char) * (totalCells + NR) + 1);
+  char* map = mem_malloc(sizeof(char) * (totalCells + grid_get_NR(grid)) + 1);
   int index = 0;
   for (int i; i < totalCells; i++) {
 
@@ -215,7 +230,7 @@ char* player_get_string(player_t* player, grid_t* grid) {
 
       if (c == '*') {
 
-        bool stillVis = grid_isVisible(grid, grid_get(player_get_x(player), player_get_y(player)), cell);
+        bool stillVis = grid_isVisible(grid, grid_get(grid, player_get_x(player), player_get_y(player)), cell);
         if (stillVis) {
           map[index] = '*';
         } else {
@@ -231,12 +246,14 @@ char* player_get_string(player_t* player, grid_t* grid) {
 
     //at end of row?
     if (((i+1) % grid_get_NC(grid)) == 0) {
-      grid->map[index] = '\n';
+      map[index] = '\n';
       index++;
     }
   }
 
   map[index] = '\0';
+
+  return map;
 
 }
 

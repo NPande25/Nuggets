@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <math.h>
 #include "file.h"
-#include "player.h"
 #include "mem.h"
 #include "gridcell.h"
 
@@ -41,6 +40,15 @@ typedef struct grid grid_t;
  *     caller must later free the grid struct via grid_delete()
  */
 grid_t* grid_new();
+
+
+int grid_get_NR(grid_t* grid);
+
+int grid_get_NC(grid_t* grid);
+
+gridcell_t* grid_get_gridarray(grid_t* grid, int idx);
+
+
 
 
 /********** grid_load *********
@@ -124,19 +132,7 @@ void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* ite
 bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
 
 
-/********** grid_playerVisibility ***********
- * create a string with the visibility for a player, replacing
- * invisible cells with ' '
- * 
- * inputs:
- *     grid - grid of interest
- *     player - gridcell where the player is  ----- UPDATE THIS
- * output:
- *     char* - string with only the visible characters
- * note:
- *     caller is responsible for freeing the string later on
- */
-char* grid_playerVisibility(grid_t* grid, gridcell_t* player);
+
 
 /********* grid_generateGold ***********
  * create a random number of gold piles in a grid, between minPiles and maxPiles
