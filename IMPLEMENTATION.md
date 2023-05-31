@@ -79,65 +79,51 @@ player_delete()
 
 ### Data structures
 
-bool* boolGrid
-boolGrid is a 1d array of booleans aligning with the main map, where each boolean is true if the corresponding character on the map has been seen by the player, false otherwise
-
-struct gridcell_t
-The main 1d array of grid is made of gridcell_t structs, each representing a single character in the map.
+Grid does not use any outside data structures. It uses `gridcell`, which is a sub-data structure described below.
 
 ### Definition of function prototypes
 
-A function to create a new grid
+`grid` implements several functions in `grid.c`:
+
+`grid_new`, creates a new `grid_t` struct.
+
+`grid_get_NR` returns the number of rows.
+
+`grid_get_NC` returns the number of columns.
+
+`grid_get_gridarray` returns the gridcell in the gridarray at a specified index.
+
+`grid_get_map` returns the map, a char* string in the grid that holds the map.
+
+`grid_load` loads a grid from a file specified by the path name. The file represents a grid where each character in the file corresponds to a cell in the grid.
+
+`grid_update_map` updates the map string after it has changed, when a player has moved
+
+`grid_set` changes the character at a certain location in the grid.
+ 
+`grid_print` prints the char* map of the grid. This is mostly used for testing/debugging purposes. For the game, we have more sophisticated `get_string` methods.
+
+`grid_iterate` iterates over all the gridcells in the grid.
+
+`grid_isVisible` is the base visibility function for the game. It determines whether a target gridcell is visible from a player gridcell.
+
+`grid_generateGold` creates a random number of gold piles in a grid, between minPiles and maxPiles.
+
+`grid_delete` deletes the `grid_t` struct.
 
 ```c
 grid_new()
-```
-
-Load a grid from a file specified by the path name. The file represents a grid where each character in the file corresponds to a cell in the grid.
-
-```c
 void grid_load(grid_t* grid, char* pathName);
-```
-
- Change the character at a certain location in the grid
- 
- ```c
- void grid_set(grid_t* grid, int x, int y, char c);
-```
-
-Prints the char* map of the grid
-
-```c
+int grid_get_NR(grid_t* grid);
+int grid_get_NC(grid_t* grid);
+gridcell_t* grid_get_gridarray(grid_t* grid, int idx);
+char* grid_get_map(grid_t* grid);
+void grid_set(grid_t* grid, int x, int y, char c);
 void grid_print(grid_t* grid);
-```
-
-Updates the map string after it has changed, when a player has moved
-
-```c
 void grid_update_map(grid_t* grid);
-```
-
-Iterates over all the gridcells in the grid
-
-```c
 void grid_iterate(grid_t* grid, void* arg, void (*itemfunc)(void* arg, void* item));
-```
-
-Determine whether a target gridcell is visible from a player gridcell.
-
-```c
 bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target);
-```
-
-Creates a random number of gold piles in a grid, between minPiles and maxPiles
-
-```c
 void grid_generateGold(grid_t* grid, int minPiles, int maxPiles, int goldTotal);
-```
-
-Deletes a grid
-
-```c
 void grid_delete(grid_t* grid );
 ```
 
@@ -197,8 +183,6 @@ Gridcell_set that gridcell to the corresponding character
 Change the character at the map’s corresponding index
 ```
 
-#### `grid_get`
-```
 
 
 #### `grid_isVisible`
@@ -230,9 +214,23 @@ Loop over all the integer y values from player_getY to target_getY
 
 Return true
 ```
-	
-	
 
+#### `grid_get`
+```
+check for null arguments
+calculate index from x,y position
+return gridcell at that index
+```
+
+#### `grid_delete`
+```
+check for null argument
+call gridcell_delete to free each gridcell in gridarray
+free the map
+free the gridarray
+free the grid
+```
+	
 
 ## Server
 
