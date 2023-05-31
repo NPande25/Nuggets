@@ -28,52 +28,95 @@ Grid_t contains a 1d array of gridcells, each representing a character on the ma
 
 ### Definition of function prototypes
 
-A function to create a new player
+The `player` module implements several functions.
 
+`player_new` creates a new player
+
+`player_playerVisibility` updates a player's visibility grid (boolGrid) based on the main grid after each player moves. 
+
+`player_get_string` takes the current grid and print out the string map that the specific player sees themselves.
+
+`player_delete` deletes a `player_t` struct.
+
+Then, the module implements a series of getters and setters for various members of the `player_t` struct, which are:
+* `player_get_addr`
+* `player_get_boolGrid`
+* `player_get_c`
+* `player_get_name`
+* `player_get_score`
+* `player_get_x`
+* `player_get_y`
+* `player_is_active`
+* `player_set_c`
+* `player_set_name`
+* `player_set_score`
+* `player_set_boolGrid`
+* `player_set_x`
+* `player_set_y`
+* `player_deactivate`
+
+
+Function prototypes:
 ```c
-player_new()
-```
-
-A function to update a player's visibility grid (boolGrid) based on the main grid after each player moves. 
-
-```c
+player_t* player_new(char c, const char* name, const addr_t addr, int NR, int NC);
+void player_delete(player_t* player);
 void player_playerVisibility(player_t* player, grid_t* grid);
-```
-
-A function to take the current grid and print out the string map that the specific player sees theirselves.
-
-```c
+addr_t player_get_addr(player_t* player);
+bool player_get_boolGrid(player_t* player, int index);
+char player_get_c(player_t* player);
+const char* player_get_name(player_t* player);
+int player_get_score(player_t* player);
+int player_get_x(player_t* player);
+int player_get_y(player_t* player);
+bool player_is_active(player_t* player);
+void player_set_c(player_t* player, char c);
+void player_set_name(player_t* player, char* name);
+void player_set_score(player_t* player, int score);
+void player_set_boolGrid(player_t* player, int index, bool visible);
+void player_set_x(player_t* player, int x);
+void player_set_y(player_t* player, int y);
+void player_deactivate(player_t* player);
 char* player_get_string(player_t* player, grid_t* grid);
-```
-
-A function to delete a player
-
-```c
-player_delete()
 ```
 
 ### Detailed pseudo code
 
+#### `player_new`
+```
+allocate for player
+allocate for boolGrid
+for each index in boolGrid
+	set to false
+initialize each member of player
+return the player
+```
+
 #### `player_playerVisibility`:
+```
+for each gridcell in the main map grid
+	checks if each cell is visable from the player's current position
+	if yes, mark that index as true
+	if not, mark as false
+```
 
-	for each gridcell in the main map grid
-		checks if each cell is visable from the player's current position
-		if yes, mark that index as true
-		if not, mark as false
-
----
+#### `player_delete`
+```
+free the boolGrid
+free the player struct
+```
 
 #### `player_get_string`:
-
-	for each gridcell in the main map grid
-		if the gridcell is visible to player
-			if it is gold
-				if the player can currently seen it
-					show the gold
-				otherwise show it as an empty room space
-			else if it is the player's character
-				show it as @ symbol
-			otherwise, print the gridcell as it comes
+```
+for each gridcell in the main map grid
+	if the gridcell is visible to player
+		if it is gold
+			if the player can currently seen it
+				show the gold
+			otherwise show it as an empty room space
+		else if it is the player's character
+			show it as @ symbol
+		otherwise, print the gridcell as it comes
+```
 
 ## Grid
 
@@ -112,7 +155,7 @@ Grid does not use any outside data structures. It uses `gridcell`, which is a su
 `grid_delete` deletes the `grid_t` struct.
 
 ```c
-grid_new()
+grid_t* grid_new();
 void grid_load(grid_t* grid, char* pathName);
 int grid_get_NR(grid_t* grid);
 int grid_get_NC(grid_t* grid);
