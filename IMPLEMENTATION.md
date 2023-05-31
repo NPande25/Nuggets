@@ -120,9 +120,6 @@ for each gridcell in the main map grid
 
 ## Grid
 
-### Data structures
-
-Grid does not use any outside data structures. It uses `gridcell`, which is a sub-data structure described below.
 
 ### Definition of function prototypes
 
@@ -226,8 +223,6 @@ Gridcell_set that gridcell to the corresponding character
 Change the character at the map’s corresponding index
 ```
 
-
-
 #### `grid_isVisible`
 ```
 Check if grid, player, or target is null
@@ -274,6 +269,23 @@ free the gridarray
 free the grid
 ```
 	
+### Data Structures
+#### gridcell_t
+The `grid_t` struct also uses `gridcell_t`, a struct that represents one specific cell in the grid. The gridcell struct holds certain members in it, which include:
+
+```c
+typedef struct gridcell {
+  char c;                       // actual makeup of cell
+  int x;                        // x position in grid
+  int y;                        // y position in grid
+  int gold;                     // amount of gold in place, 0 if none
+  bool show;                    // if cell can be seen by player or not
+  bool room;
+  bool isWall;
+} gridcell_t;
+```
+
+The struct also implements getter and setter functions for each of these members.
 
 ## Server
 
