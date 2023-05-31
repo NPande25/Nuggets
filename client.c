@@ -7,10 +7,11 @@
  * 
  * Exit codes: 1 -> invalid number of arguments
  *             2 -> null argument passed
- *             3 -> failure to initialize messages module
- *             4 -> bad hostname or port
- *             5 -> failed screen verification
- *             6 -> failed to initalize player (malformed OK message)
+ *             3 -> failed data struct initialization
+ *             4 -> failure to initialize messages module
+ *             5 -> bad hostname or port
+ *             6 -> failed screen verification
+ *             7 -> failed to initalize player (malformed OK message)
  */
 
 #include <stdio.h>
@@ -20,6 +21,14 @@
 #include <ncurses.h>
 #include <time.h>
 #include "message.h"
+
+/**************** global types ****************/
+typedef struct data {
+  // size of board, initialized to initial window size
+  int NROWS;
+  int NCOLS;
+  char player; //if non-zero, prepresents player's letter inbetween display frames
+} data_t;
 
 // internal function prototypes
 static bool handleMessage(void* arg, const addr_t from, const char* message);
@@ -36,15 +45,17 @@ static bool handleGRID(const char* message);
 static bool handleGOLD(const char* message);
 static void handleDISPLAY(const char* message);
 
-// size of board, initialized to initial window size
-static int NROWS;
-static int NCOLS;
-static char player;
+// game helper function
+static data_t* data_new();
+
+static data_t* data;
 
 /* ***************************
  *  main function
  *  Accepts either 2 or 3 arguments from command-line: hostname port [playername]
- *  
+ *  client interacts with server to play the nugget game by sending keystrokes.
+ *  Usage described in DESIGN.md
+ *
  */
 int main(int argc, char *argv[])
 {
@@ -64,6 +75,9 @@ int main(int argc, char *argv[])
           exit(2); // bad argument
       }
   }
+
+  // create data struct
+  data = data_new();
 
   /* initialize messages module */
   // (without logging)
@@ -180,6 +194,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       // send quit message
       message_send(from, "KEY Q");
       message_done();
+      // failed to initialize grid
       exit(5);
     }
 
@@ -225,9 +240,9 @@ handleMessage(void* arg, const addr_t from, const char* message)
 static bool
 handleOK(const char* message)
 {
-  player = 0;
+  data->player = 0;
   if (message != NULL) {
-    if (sscanf(message, "OK %c", &player) != 1) {
+    if (sscanf(message, "OK %c", &data->player) != 1) {
       return false;
     }
   }
@@ -253,15 +268,21 @@ handleGRID(const char* message)
     return false;
   }
   // if not null, verify screen size
-  if (nrows+1 > NROWS || ncols > NCOLS) {
+  while (nrows+1 > data->NROWS || ncols > data->NCOLS) {
     endwin(); // CURSES
-    fprintf(stderr, "ERROR: incompatible screen of size [%d, %d] for [%d, %d]\n", NROWS, NCOLS, nrows+1, ncols);
-    return false;
-  } else {
-    // update with screen output dimensions
-    NROWS = nrows+1;
-    NCOLS = ncols;
+
+    fprintf(stderr, "ERROR: incompatible screen of size [%d, %d] for [%d, %d]\n", data->NROWS, data->NCOLS, nrows+1, ncols);
+    mvprintw(0,0, "ERROR: incompatible screen of size [%d, %d] for [%d, %d]\nRESIZE and press ENTER to continue", data->NROWS, data->NCOLS, nrows+1, ncols);
+
+    char ch = getch();
+    if (ch == '\n') {
+      endwin();
+      initialize_curses();
+    }
   }
+  // update with screen output dimensions
+  data->NROWS = nrows+1;
+  data->NCOLS = ncols;
   return true;
 }
 
@@ -292,10 +313,10 @@ handleGOLD(const char* message)
       addch(' ');
     }
     char buffer[ncols]; //buffer string of max length
-    if (player == 0) {
+    if (data->player == 0) {
       snprintf(buffer, ncols, "Spectator: %d nuggets unclaimed.", gold_left);
     } else {
-      int len_msg = snprintf(buffer, ncols, "Player %c has %d nuggets (%d nuggets unclaimed).", player, gold_purse, gold_left);
+      int len_msg = snprintf(buffer, ncols, "Player %c has %d nuggets (%d nuggets unclaimed).", data->player, gold_purse, gold_left);
       char gold_left_buffer[ncols];
       int len_gold_left_msg = 0;
       if (gold_collected > 0) {
@@ -344,7 +365,7 @@ initialize_curses()
 
   // cache the size of the window in our global variables
   // (this is a macro, which is why we don't need & before the variables.)
-  getmaxyx(stdscr, NROWS, NCOLS);
+  getmaxyx(stdscr, data->NROWS, data->NCOLS);
 
   cbreak(); // actually, this is the default
   noecho(); // don't show the characters users type
@@ -362,10 +383,10 @@ static void
 display_map(char* display)
 {
   // move chars from display to ncurses
-  for (int row = 0; row < NROWS; row++) {
-    for (int col = 0; col < NCOLS; col++) {
+  for (int row = 0; row < data->NROWS; row++) {
+    for (int col = 0; col < data->NCOLS; col++) {
       move(row+1,col);                          // CURSES, +1 account for info line
-      int idx = row * (NCOLS+1) + col;
+      int idx = row * (data->NCOLS+1) + col;
       if (idx < strlen(display)) {                
         addch(display[idx]);  // CURSES
       } else {
@@ -374,36 +395,6 @@ display_map(char* display)
     }
   }
   refresh();                                    // CURSES
-
-  // /* clear previous temp message */
-  // int max_nrows = 0; //dummy
-  // int max_ncols = 0;
-  // int loc = 0;
-  // getmaxyx(stdscr, max_nrows, max_ncols);
-  // // clear dummy variable
-  // (void)max_nrows;
-  // // clear temp status messages
-  // for (loc = 0; loc < max_ncols; loc++) {
-  //   char c = mvinch(0, loc) & A_CHARTEXT;
-  //   if (c == '.') {
-  //     loc++;
-  //     break;
-  //   }
-  // }
-  // char line[max_ncols];
-  // mvinnstr(0, 0, line, max_ncols);
-  // bool refresh = (line != NULL) && (strstr(line, "unknown") != NULL);
-  // // ensure stop character was found
-  // if (loc != 0) {
-  //   while(loc < max_ncols) {
-  //     move(0, loc++);
-  //     addch(' ');
-  //   }
-  // }
-  // // if clear is required, clear
-  // if (refresh) {
-  //   refresh();
-  // }
 }
 
 /* ************ clear_temp_message ************* */
@@ -478,4 +469,21 @@ init_map()
     }
   }
   refresh();
+}
+
+/* ************ data_new *********************** */
+/* allocates memory for data struct  */
+static data_t*
+data_new()
+{
+  // allocate memory for array of pointers
+  data_t* data = malloc(sizeof(data_t));
+  data->NROWS = -1;
+  data->NCOLS = -1;
+  data->player = 0;
+  if (data == NULL) {
+      exit(3);
+  }
+
+  return data;
 }
