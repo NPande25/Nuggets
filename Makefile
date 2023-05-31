@@ -18,7 +18,12 @@ MAKE = make
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
 
-all: server client
+all:
+	make -C support
+	make -C libcs50
+	make -C player
+	make server
+	make client
 
 # executable depends on object files
 server: server.o $(LLIBS)
@@ -42,3 +47,6 @@ clean:
 	rm -rf *~ *.o *.dSYM
 	rm -f client
 	rm -f server
+	make -C support clean
+	make -C libcs50 clean
+	make -C player clean
