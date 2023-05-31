@@ -10,7 +10,7 @@
 typedef struct player player_t;
 
 
-player_t* player_new(char c, char* name, const addr_t addr, int NR, int NC);
+player_t* player_new(char c, const char* name, const addr_t addr, int NR, int NC);
 
 void player_delete(player_t* player);
 
@@ -32,7 +32,7 @@ bool player_get_boolGrid(player_t* player, int index);
 
 char player_get_c(player_t* player);
 
-char* player_get_name(player_t* player);
+const char* player_get_name(player_t* player);
 
 int player_get_score(player_t* player);
 

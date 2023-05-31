@@ -159,7 +159,7 @@ void grid_load(grid_t* grid, char* pathName)
       // y = totalIdx / numCols, rounded down (by casting as int)
       gridcell_t* gridcell = gridcell_new(c, totalIdx % numCols, (int) (totalIdx / numCols), 0, false, false);
       grid->gridarray[totalIdx] = gridcell;
-      if (c == '-' || c == '|' || c == '+' || c == '#') {
+      if (c == '-' || c == '|' || c == '+' || c == '#' || c == ' ') {
         gridcell_setWall(gridcell, true);
       } else {
         gridcell_setWall(gridcell, false);
@@ -255,6 +255,7 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
     return true;
   }
 
+
   if (dx == 0 && dy > 0) { // vertical line, going down
     for (int y = startY + 1; y < endY; y++) {
       gridcell_t* g = grid_get(grid, startX, y);
@@ -341,6 +342,7 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
     }
   }
 
+
   // LOOP 2 - Y VALUES: for each integer y value in between startY and endY (exclusive),
   // calculate x value and check the cells left and right for isWall
   for (int y = startY + incrY; y != endY; y += incrY) {
@@ -357,14 +359,12 @@ bool grid_isVisible(grid_t* grid, gridcell_t* player, gridcell_t* target)
     gridcell_t* underg = grid->gridarray[underIdy];
     gridcell_t* overg = grid->gridarray[overIdy];
 
-
     if (gridcell_isWall(underg) && gridcell_isWall(overg)) {
       return false;
     }
   }
 
   return true; // if walls have not been hit in any loop, it's visible
-
 }
 
 

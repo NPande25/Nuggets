@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 
 #include "file.h"
@@ -21,9 +22,9 @@
 
 static bool handleMessage(void* arg, const addr_t from, const char* message);
 static void parseArgs(const int argc, char* argv[], char** mapFileName, int* seed);
-static void addPlayer(addr_t from, char* name);
+static void addPlayer(addr_t from, const char* name);
 static void addSpectator(addr_t from);
-static void handleKey(player_t* player, char* key);
+static void handleKey(player_t* player, const char* key);
 static bool moveOnMap(player_t* player, int newX, int newY);
 static void handleQuit(player_t* player); 
 static void dropGold();
@@ -84,8 +85,8 @@ main (const int argc, char* argv[])
     grid_t* gameMap = grid_new(numCol, numRow); //get row and column size
     grid_load(gameMap, mapFileName);
     game.map = gameMap;
-    game.allPlayers = mem_calloc(26, sizeof(player_t));
-    game.spect = NULL;
+    //game.allPlayers = mem_calloc(26, sizeof(player_t));
+    //game.spect = NULL;
     game.hasSpect = false;
     game.numPlayers = 0;
     game.numGold = 250;
@@ -110,7 +111,7 @@ main (const int argc, char* argv[])
     // clear memory for grid and players
     grid_delete(gameMap);
     for(int i = 0; i<game.numPlayers; i++){
-        player_delete(game.numPlayers[i]);
+        player_delete(game.allPlayers[i]);
     }
     //mem_free(game);
 
@@ -167,12 +168,12 @@ handleMessage(void* arg, const addr_t from, const char* message)
     // print the message and a prompt
     printf("'%s'\n", message);
     printf("> ");
-   // fflush(stdout);
+    fflush(stdout);
 
     if (strncmp(message, "PLAY ", strlen("PLAY ")) == 0) {
         const char* playerName = message + strlen("PLAY ");
-        //addPlayer(from, playerName);
-        printf("PLAY: %s\n", playerName);
+        addPlayer(from, playerName);
+        //printf("PLAY: %s\n", playerName);
     } 
     else if (strncmp(message, "SPECTATE", strlen("SPECTATE")) == 0) {
         addSpectator(from);
@@ -182,23 +183,32 @@ handleMessage(void* arg, const addr_t from, const char* message)
         const char* keystroke = message + strlen("KEY ");
         printf("KEY: %s\n", keystroke);
 
-        //get moving player
-        player_t* mover = NULL;
-        for(int i = 0; i<game.numPlayers; i++) {
-            if (message_eqAddr(from, player_get_Addr(game.allPlayers[i]))) {
-                mover = game.allPlayers[i];
+        if(!message_eqAddr(from, game.spect)) {
+            //get moving player
+            player_t* mover = NULL;
+            for(int i = 0; i<game.numPlayers; i++) {
+                if (message_eqAddr(from, player_get_addr(game.allPlayers[i]))) {
+                    mover = game.allPlayers[i];
+                }
+            }
+
+            handleKey(mover, keystroke);
+
+            //update player visibility
+            player_playerVisibility(mover, game.map);
+        }
+        else {
+            printf("from spectate\n");
+            if (strcmp(keystroke, "Q") == 0) {
+                player_t* playerSpect = player_new('.', "SPECTATOR", from, game.numRows, game.numCols);
+                handleQuit(playerSpect);
+                player_delete(playerSpect);
             }
         }
-
-        handleKey(mover, keystroke);
-
-        //update player visibility
-        player_playerVisibility(game->map, mover);
     }
     else {
         message_send(from, "ERROR malformed message\n");
     }
-
 
     updatePlayers();
     updateSpectator();
@@ -218,36 +228,40 @@ handleMessage(void* arg, const addr_t from, const char* message)
 */
 
 static void
-addPlayer(addr_t from, char* name)
+addPlayer(addr_t from, const char* name)
 {
-    const int maxPlayers = 26;
-    const int maxNameLength = 50; //max number of chars in player's name
+    printf("name: %s\n", name);
 
-    if (gam.numPlayers == maxPlayers-1) {
+    const int maxPlayers = 26;
+   // const int maxNameLength = 50; //max number of chars in player's name
+
+    if (game.numPlayers == maxPlayers-1) {
         message_send(from, "QUIT Game is full: no more players can join.");
     }
     else { //create new player and add to array of players
         
         //truncate name
-        int length = strlen(name);
+      /*  int length = strlen(name);
         if (length > maxNameLength) {
-            name[maxLength] = '\0';
-        }
+            name[maxNameLength] = '\0';
+        }*/
 
         //get player letter
-        int curNumPlayers = game.numPlayers
+        int curNumPlayers = game.numPlayers;
         char playerLetter = 'A' + curNumPlayers;
-        game.numPlayers = curNumPlayers + 1;
 
         //create new player
         player_t* newPlayer = player_new(playerLetter, name, from, game.numRows, game.numCols);
         
         if (newPlayer != NULL) {
-            game.players[game.numPlayers] = newPlayer;   
+            //update player visibility
+            player_playerVisibility(newPlayer, game.map);
+
+            game.allPlayers[game.numPlayers] = newPlayer;   
             game.numPlayers++;
 
             //send OK message to client
-            char okMsg[5];
+            char okMsg[10];
             sprintf(okMsg, "OK %c\n", playerLetter);
             message_send(from, okMsg);  
 
@@ -262,10 +276,10 @@ addPlayer(addr_t from, char* name)
                 int x = rand() % (game.numCols);
                 int y = rand() % (game.numRows);
 
-                if(grid_get(game->map) == '.') {
-                    grid_set(game->map, x, y, playerLetter);
+                if(gridcell_getC(grid_get(game.map, x, y)) == '.') {
+                    grid_set(game.map, x, y, playerLetter);
                     player_set_x(newPlayer, x);
-                    playser_set_y(newPlayer, y);
+                    player_set_y(newPlayer, y);
                     dropped = true;
                 }
             }
@@ -303,9 +317,9 @@ addSpectator(addr_t from)
 * where player is trying to move.
 */
 static void 
-handleKey(player_t* player, char* key) 
+handleKey(player_t* player, const char* key) 
 {
-    switch (key) {
+    switch (*key) {
     case 'h': 
         moveOnMap(player, player_get_x(player)-1, player_get_y(player));
         break;
@@ -352,12 +366,13 @@ handleKey(player_t* player, char* key)
         while(moveOnMap(player, player_get_x(player)-1, player_get_y(player)+1)){}
         break;
     case 'N': 
-        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)+1))(){}
+        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)+1)){}
         break;
     case 'Q':
         handleQuit(player);
         break;
     default:
+        message_send(player_get_addr(player), "ERROR: unknown keystroke");
         break;
     }
 }
@@ -374,61 +389,66 @@ moveOnMap(player_t* player, int newX, int newY)
     if (player_is_active(player) == true) {
         int curX = player_get_x(player);
         int curY = player_get_y(player);
-        gridcell_t* curCell = grid_get(game->map, curX, curY);
-        gridcell_t* newCell = grid_get(game->map, newX, curY);
+        gridcell_t* curCell = grid_get(game.map, curX, curY);
+        gridcell_t* newCell = grid_get(game.map, newX, newY);
         char curChar = gridcell_getC(curCell);
         if(newCell == NULL || curCell == NULL) {
             return false;
         }
         else {
             char newChar = gridcell_getC(newCell);
+            printf("curChar: %c, newChar: %c\n", curChar, newChar);
             int checkLetter = newChar - 'A';
-            if(checkLetter >= 0 && checkLetter <=25) {
-                player_t* otherPlayer = gam.allPlayers[checkLetter];
-                grid_set(game->map, curX, curY, newChar); 
+            if(isupper(newChar)) { //if(checkLetter >= 0 && checkLetter <=25) {
+                player_t* otherPlayer = game.allPlayers[checkLetter];
+                grid_set(game.map, curX, curY, newChar); 
                 player_set_x(otherPlayer, curX);
-                player_set_y(otherPlaer, curY);
+                player_set_y(otherPlayer, curY);
 
-                grid_set(game->map, newX, newY, curChar); 
+                grid_set(game.map, newX, newY, curChar); 
                 player_set_x(player, newX);
                 player_set_y(player, newY);
+
+                printf("moved letter\n");
 
                 return true;
             }
             else if (newChar == '*') {
-                int pileGold = newCell->gold;
+                int pileGold = gridcell_getGold(newCell);
                 int newScore = player_get_score(player) + pileGold;
-                player_set_score(newScore);
+                player_set_score(player, newScore);
                 game.numGold -= pileGold;
-                grid_set(game->map, newX, newY, curChar); 
+                grid_set(game.map, newX, newY, curChar); 
                 player_set_x(player, newX);
                 player_set_y(player, newY);
                 if(gridcell_getRoom(curCell)) {
-                    grid_set(game->map, curX, curY, '.');
+                    grid_set(game.map, curX, curY, '.');
                 }
                 else {
-                    grid_set(game->map, curX, curY, '#');
+                    grid_set(game.map, curX, curY, '#');
                 }
 
                 //send GOLD message to player
                 char goldMsg[100];
-                sprintf(goldMsg, "GOLD %d %d %d\n", pileGold, player_get_score(curPlayer), game.numGold);
+                sprintf(goldMsg, "GOLD %d %d %d\n", pileGold, player_get_score(player), game.numGold);
                 message_send(player_get_addr(player), goldMsg);
 
+                printf("moved gold\n");
                 return true;
             }
             else if (newChar == '.' || newChar == '#') {
-                grid_set(game->map, newX, newY, curChar);
+                grid_set(game.map, newX, newY, curChar);
                 player_set_x(player, newX);
                 player_set_y(player, newY);
 
                 if(gridcell_getRoom(curCell)) {
-                    grid_set(game->map, curX, curY, '.');
+                    grid_set(game.map, curX, curY, '.');
                 }
                 else {
-                    grid_set(game->map, curX, curY, '#');
+                    grid_set(game.map, curX, curY, '#');
                 }
 
+                printf("moved room/hall\n");
                 return true;
             }
         }
@@ -446,13 +466,13 @@ moveOnMap(player_t* player, int newX, int newY)
 static void
 handleQuit(player_t* player) 
 {
-    if(message_eqAddr(player->addr, game->spect)) {
+    if(message_eqAddr(player_get_addr(player), game.spect)) {
         game.hasSpect = false;
-        message_send(game->spect, "QUIT Thanks for watching!");
+        message_send(game.spect, "QUIT Thanks for watching!");
     }
     else {
-        player_deactive(player);
-        message_send(player->addr, "QUIT Thanks for playing!");
+        player_deactivate(player);
+        message_send(player_get_addr(player), "QUIT Thanks for playing!");
     }
 }
 
@@ -472,8 +492,10 @@ dropGold()
     
     int remaining = goldTotal; //remaining gold to drop
     int bound = (int) (goldTotal / numPiles);
+    int numGoldInPile = 0;
+
     for (int i = 0; i<numPiles-1; i++) {
-        int numGoldInPile = (rand() % (bound-1)) + 1;
+        numGoldInPile = (rand() % (bound-1)) + 1;
 
         //drop gold
         bool dropped = false;
@@ -481,10 +503,10 @@ dropGold()
             int x = rand() % (game.numCols);
             int y = rand() % (game.numRows);
 
-            char randCell = gridcell_getC(grid_get_cell(game->map, x, y));
+            char randCell = gridcell_getC(grid_get(game.map, x, y));
             if(randCell== '.') {
-                grid_set(game->map, x, y, '*');
-                gridcell_setGold(grid_get_cell(game->map, x, y), numGoldinPile);
+                grid_set(game.map, x, y, '*');
+                gridcell_setGold(grid_get(game.map, x, y), numGoldInPile);
                 dropped = true;
             }
         }
@@ -496,9 +518,9 @@ dropGold()
         int x = rand() % (game.numCols);
         int y = rand() % (game.numRows);
 
-        if(grid_get(game->map) == '.') {
-            grid_set(game->map, x, y, '*');
-            gridcell_setGold(grid_get_cell(game->map, x, y), numGoldinPile);            
+        if(gridcell_getC(grid_get(game.map, x, y)) == '.') {
+            grid_set(game.map, x, y, '*');
+            gridcell_setGold(grid_get(game.map, x, y), remaining);            
             dropped = true;
         }
     }
@@ -510,25 +532,31 @@ dropGold()
 static void
 updatePlayers()
 {
-     for(int i = 0; i<game->numPlayers; i++) {
+     for(int i = 0; i<game.numPlayers; i++) {
         //get current player
-        player_t* curPlayer = game->allPlayers[i];
-
+        player_t* curPlayer = game.allPlayers[i];
+        if(curPlayer == NULL){
+            printf("player is null\n");
+        }
         //send GOLD message to players
         char goldMsg[100];
-        sprintf(goldMsg, "GOLD %d %d %d\n", 0, player_get_score(curPlayer), game.numGold);
+        int score = player_get_score(curPlayer);
+        sprintf(goldMsg, "GOLD %d %d %d\n", 0, score, game.numGold);
         message_send(player_get_addr(curPlayer), goldMsg);
+        
+        printf("gold sent\n");
 
         //send DISPLAY message to players
-        char* gridString = player_get_string(curPlayer, game->map);
-        char* displayMsg = mem_malloc((sizeof(char) * strlen(gridString)) + 9);
+        char* gridString = player_get_string(curPlayer, game.map);
+        printf("message sent\n");
+        char* displayMsg = mem_malloc((sizeof(char) * strlen(gridString)) + 10);
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
         message_send(player_get_addr(curPlayer), displayMsg);
-        mem_free(gridString);
         mem_free(displayMsg);
     }
 }
+
 
 /**************** updateSpectator ****************/
 /* Sends GOLD and DISPLAY message to the spectator.
@@ -536,23 +564,23 @@ updatePlayers()
 static void
 updateSpectator()
 {
-    if (game->hasSpect) {
+    if (game.hasSpect) {
         //send GOLD message to specator
         char goldMsg[100];
         sprintf(goldMsg, "GOLD %d %d %d\n", 0, 0, game.numGold);
-        message_send(game->spect, goldMsg);
+        message_send(game.spect, goldMsg);
 
         //send DISPLAY message to spectator
-        grid_update_map(game->map);
-        char* gridString = grid_get_map(game->map);
+        grid_update_map(game.map);
+        char* gridString = grid_get_map(game.map);
         char* displayMsg = mem_malloc((sizeof(char) * strlen(gridString)) + 9);
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
-        message_send(player_get_addr(curPlayer), displayMsg);
-        mem_free(gridString);
+        message_send(game.spect, displayMsg);
         mem_free(displayMsg);
     }
 }
+
 
 /**************** gameOver ****************/
 /* Creates game over message with player data and sends it to the 
@@ -562,12 +590,16 @@ static void
 gameOver() 
 {
     //get game over message
-    char gameOverMsg[20];
+    char gameOverMsg[100];
     sprintf(gameOverMsg, "QUIT GAME OVER:\n");
     for (int i = 0; i<game.numPlayers; i++) {
         player_t* curPlayer = game.allPlayers[i];
         char playerData[50];
-        sprintf(playerData, "%-3c %7d %s\n", player_get_c(curPlayer), player_get_score(curPlayer), player_get_name(curPlayer);
+       
+        printf("name: %s\n", player_get_name(curPlayer));
+        printf("char: %c\n", player_get_c(curPlayer));
+        printf("score: %d\n", player_get_score(curPlayer));
+        sprintf(playerData, "%-3c %7d\n", player_get_c(curPlayer), player_get_score(curPlayer));
         strcat(gameOverMsg, playerData);
     }
 
@@ -576,4 +608,3 @@ gameOver()
         message_send(player_get_addr(game.allPlayers[i]), gameOverMsg);
     }
 }
-*/
