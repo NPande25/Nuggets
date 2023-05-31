@@ -124,6 +124,7 @@ void grid_load(grid_t* grid, char* pathName)
   fp = fopen(pathName, "r");
   if (fp == NULL) {
     fprintf(stderr, "Failed to open file: %s\n", pathName);
+    fclose(fp);
     return;
   }
    
@@ -191,10 +192,11 @@ void grid_set(grid_t* grid, int x, int y, char c)
   } else {
 
   // calculate index by # of cols * y value + x value
-    int idx = grid->NC * y + x;
+    int idxarray = grid->NC * y + x;
+    int idxmap = (grid->NC+1) * y + x;
 
-    gridcell_set(grid->gridarray[idx], c);
-    grid->map[idx] = c;
+    gridcell_set(grid->gridarray[idxarray], c);
+    grid->map[idxmap] = c;
   }
 }
 
@@ -417,13 +419,6 @@ gridcell_t* grid_get(grid_t* grid, int x, int y)
 void grid_print(grid_t* grid)
 {
   printf("%s\n", grid->map);
-
-  // checking if isWall works
-  for (int i = 0; i < grid->NR * grid->NC; i++) {
-  //   printf("%c", gridcell_getC(grid->gridarray[i]));
-    // printf("\n");
-    // printf("At: (%2d, %2d), Char: %c, Gold: %d\n", gridcell_getX(grid->gridarray[i]), gridcell_getY(grid->gridarray[i]), gridcell_getC(grid->gridarray[i]), gridcell_getGold(grid->gridarray[i]));
-  }
 }
 
 void grid_delete(grid_t* grid)
