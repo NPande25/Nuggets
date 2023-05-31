@@ -29,9 +29,8 @@ typedef struct gridcell {
   int y;                        //y position in grid
   int gold;                        //amount of gold in place, 0 if none
   bool show;                    //if cell can be seen by player or not
-  bool room;
-  bool isWall;
-  //maybe add player variable
+  bool room;                    // is cell in a room?
+  bool isWall;                  // is cell a wall?
 } gridcell_t;
 
 

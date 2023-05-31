@@ -50,5 +50,6 @@ player.o: player.h
 
 clean:
 	rm -f gridtest
+	rm -f visibilitytest
 	rm -f *.o
 	rm -f $(LIBOUT)
