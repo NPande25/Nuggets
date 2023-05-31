@@ -7,6 +7,8 @@
 CFLAGS = -Wall -pedantic -std=c11 -ggdb -I$(L) -I$(LL) 
 CC = gcc
 MAKE = make
+VALGRIND = valgrind --leak-check=full --show-leak-kinds=all
+
 
 # directories 
 L = ../libcs50
@@ -29,6 +31,14 @@ $(LIBOUT): gridcell.o grid.o player.o
 
 gridtest: gridtest.c grid.o gridcell.o $(LIB) $(LIB1)
 	$(CC) $(CFLAGS) $^ -lm -o $@
+
+visibilitytest: visibilitytest.c grid.o gridcell.o $(LIB) $(LIB1)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test: gridtest visibilitytest
+	$(VALGRIND) ./gridtest
+	$(VALGRIND) ./visibilitytest
+
 
 gridtest.o: gridtest.c grid.h
 
