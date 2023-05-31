@@ -33,9 +33,9 @@ typedef struct data {
 // internal function prototypes
 static bool handleMessage(void* arg, const addr_t from, const char* message);
 static bool handleInput(void* arg);
-static void display_map(char* display);
 static void initialize_curses(); // CURSES
 static void init_map();
+static void display_map(char* display);
 static void display_temp_message(const char* temp);
 static void clear_temp_message();
 
@@ -82,7 +82,8 @@ int main(int argc, char *argv[])
   /* initialize messages module */
   // (without logging)
   if (message_init(NULL) == 0) {
-      exit(3); // failure to initialize message module
+    free(data);
+    exit(3); // failure to initialize message module
   }
 
   /* assign command-line arguments to variables */
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
   addr_t server; // address of the server
   if (!message_setAddr(serverHost, serverPort, &server)) {
       fprintf(stderr, "ERROR: Failure forming address from %s %s\n", serverHost, serverPort);
+      free(data);
       exit(4); // bad hostname/port
   }
 
@@ -112,6 +114,7 @@ int main(int argc, char *argv[])
       // send quit message
       message_send(server, "KEY Q");
       message_done();
+      free(data);
       exit(6);
       // failed to initialize player name
     }
@@ -122,6 +125,9 @@ int main(int argc, char *argv[])
   
   bool ok = message_loop(&server, 0, NULL, handleInput, handleMessage);
 
+
+  // clear data
+  free(data);
   // close curses
   endwin(); // CURSES
   // shut down the message module
@@ -186,6 +192,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       // send quit message
       message_send(from, "KEY Q");
       message_done();
+      free(data);
       exit(6);
     }
 
@@ -195,6 +202,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
       message_send(from, "KEY Q");
       message_done();
       // failed to initialize grid
+      free(data);
       exit(5);
     }
 
