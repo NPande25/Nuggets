@@ -10,6 +10,7 @@
  *             3 -> failure to initialize messages module
  *             4 -> bad hostname or port
  *             5 -> failed screen verification
+ *             6 -> failed to initalize player (malformed OK message)
  */
 
 #include <stdio.h>
@@ -17,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ncurses.h>
+#include <time.h>
 #include "message.h"
 
 // internal function prototypes
@@ -24,9 +26,12 @@ static bool handleMessage(void* arg, const addr_t from, const char* message);
 static bool handleInput(void* arg);
 static void display_map(char* display);
 static void initialize_curses(); // CURSES
+static void init_map();
+static void display_temp_message(const char* temp);
+static void clear_temp_message();
 
 // handleMessage helpers
-static void handleOK();
+static bool handleOK();
 static bool handleGRID(const char* message);
 static bool handleGOLD(const char* message);
 static void handleDISPLAY(const char* message);
@@ -34,6 +39,7 @@ static void handleDISPLAY(const char* message);
 // size of board, initialized to initial window size
 static int NROWS;
 static int NCOLS;
+static char player;
 
 /* ***************************
  *  main function
@@ -42,7 +48,7 @@ static int NCOLS;
  */
 int main(int argc, char *argv[])
 {
-
+  
   /* parse the command line, validate parameters */ 
   const char* program = argv[0];
   // check num parameters
@@ -78,12 +84,23 @@ int main(int argc, char *argv[])
   // connect to server
   const char* playername = argv[3];
   if (playername != NULL) {
+    // send playername to server
     char line[message_MaxBytes];
     strcpy(line, "PLAY ");
     strncat(line, playername, message_MaxBytes-strlen("PLAY "));
+    // connect as player
     message_send(server, line);
   } else {
+    // connect as spectator
     message_send(server, "SPECTATE");
+    // no ok message is sent, auto-initialize
+    if(!handleOK(NULL)) {
+      // send quit message
+      message_send(server, "KEY Q");
+      message_done();
+      exit(6);
+      // failed to initialize player name
+    }
   }
 
   // Loop, waiting for input or for messages; provide callback functions.
@@ -126,6 +143,9 @@ handleInput(void* arg)
   strcat(message, &c);
   message[strlen("KEY ") + 1] = '\0';
 
+  // clear previous temp message (if it exists)
+  clear_temp_message();
+
   // send keystroke
   message_send(*serverp, message);
 
@@ -148,48 +168,51 @@ handleMessage(void* arg, const addr_t from, const char* message)
 
   // Find the position of the header within the message
   if (strncmp(message, "OK ", strlen("OK ")) == 0){
-    handleOK();
-    // CONFIRMATION??
-    message_send(from, "OK");
-    return false;
+    if(!handleOK(message)) {
+      // send quit message
+      message_send(from, "KEY Q");
+      message_done();
+      exit(6);
+    }
 
   } else if (strncmp(message, "GRID ", strlen("GRID ")) == 0) {
-    if (!handleGRID(message)) {
-      // bag grid
-      message_send(from, "IGNORED");
+    if(!handleGRID(message)) {
+      // send quit message
+      message_send(from, "KEY Q");
+      message_done();
+      exit(5);
     }
-    // CONFIRMATION??
-    message_send(from, "OK");
+
     return false;
 
   } else if (strncmp(message, "GOLD ", strlen("GOLD ")) == 0) {
-    if (handleGOLD(message)) {
-      // CONFIRMATION??
-      message_send(from, "OK");
-    } else {
-      // CONFIRMATION??
-      message_send(from, "IGNORED");
-    }
+    handleGOLD(message);
+
+    return false;
 
   } else if (strncmp(message, "DISPLAY\n", strlen("DISPLAY\n")) == 0) {
     handleDISPLAY(message);
 
-    // CONFIRMATION??
-    message_send(from, "OK");
-
     return false;
 
   } else if (strncmp(message, "QUIT ", strlen("QUIT ")) == 0) {
-    fprintf(stdout, "%s\n", message);
+    // close curses
+    endwin(); // CURSES
+    fflush(stdout);
+    fprintf(stdout, "\n%s\n", message);
     return true;
 
   } else if (strncmp(message, "ERROR ", strlen("ERROR ")) == 0) {
-    fprintf(stdout, "ERROR: From server '%s'\n", message);
+    // log error
+    fprintf(stderr, "%s\n", message);
+    // display to player
+    const char* temp = strchr(message, ':') + 1;
+    display_temp_message(temp);
     return false;
 
   } else {
     // MALFORMED MESSAGE -- IGNORE
-    // fprintf(stderr, "ERROR: Malformed message '%s'\n", message);
+    fprintf(stderr, "ERROR: Malformed message '%s'\n", message);
     return false;
   }
   
@@ -199,18 +222,26 @@ handleMessage(void* arg, const addr_t from, const char* message)
 /**************** handleOK ****************/
 /* no arguments                                           */
 /* initializes CURSES, fills window with blank ' ' chars  */
-static void
-handleOK()
+static bool
+handleOK(const char* message)
 {
+  player = 0;
+  if (message != NULL) {
+    if (sscanf(message, "OK %c", &player) != 1) {
+      return false;
+    }
+  }
   /* initialize curses library */
   initialize_curses(); // CURSES
-  display_map("");
+  init_map(); // initialize with blank map
+  return true;
 }
 
 /**************** handleGRID ****************/
 /* takes a char* as an argument, of the GRID message type.                          */
 /* GRID message must be in *exact* syntax as described in requirments.              */
 /* verifies that CURSES window is at least the required size (specified by message) */
+/* "The display shall consist of NR+1 rows and NC columns" */
 static bool
 handleGRID(const char* message)
 {
@@ -222,13 +253,13 @@ handleGRID(const char* message)
     return false;
   }
   // if not null, verify screen size
-  if (nrows > NROWS || ncols > NCOLS) {
+  if (nrows+1 > NROWS || ncols > NCOLS) {
     endwin(); // CURSES
-    fprintf(stderr, "ERROR: incompatible screen of size [%d, %d] for [%d, %d]\n", NROWS, NCOLS, nrows, ncols);
-    exit(5);
+    fprintf(stderr, "ERROR: incompatible screen of size [%d, %d] for [%d, %d]\n", NROWS, NCOLS, nrows+1, ncols);
+    return false;
   } else {
     // update with screen output dimensions
-    NROWS = nrows;
+    NROWS = nrows+1;
     NCOLS = ncols;
   }
   return true;
@@ -261,10 +292,25 @@ handleGOLD(const char* message)
       addch(' ');
     }
     char buffer[ncols]; //buffer string of max length
-    snprintf(buffer, ncols, "Gold Collected: %d      Gold in Purse: %d      Gold Left: %d",
-                            gold_collected, gold_purse, gold_left);
-    mvprintw(0,0, "%.*s", ncols, buffer);           // CURSES
-    refresh();                                      // CURSES
+    if (player == 0) {
+      snprintf(buffer, ncols, "Spectator: %d nuggets unclaimed.", gold_left);
+    } else {
+      int len_msg = snprintf(buffer, ncols, "Player %c has %d nuggets (%d nuggets unclaimed).", player, gold_purse, gold_left);
+      char gold_left_buffer[ncols];
+      int len_gold_left_msg = 0;
+      if (gold_collected > 0) {
+        if (ncols - len_msg > 0) { // len to buffer cannot be negative
+          len_gold_left_msg = snprintf(gold_left_buffer, ncols - len_msg, "  GOLD recieved: %d", gold_collected);
+        }
+      }
+      // copy extra message into buffer
+      for (int i = len_msg; i < len_msg + len_gold_left_msg; i++) {
+        buffer[i] = gold_left_buffer[i-len_msg];
+      }
+      buffer[len_msg+len_gold_left_msg] = '\0';
+    }
+    mvprintw(0,0, "%.*s", ncols, buffer);
+    refresh(); // CURSES
     return true;
   }
 }
@@ -302,13 +348,12 @@ initialize_curses()
 
   cbreak(); // actually, this is the default
   noecho(); // don't show the characters users type
+  curs_set(0); // set cursor to invisible
 
   // I like yellow on a black background
   start_color();
   init_pair(1, COLOR_YELLOW, COLOR_BLACK);
   attron(COLOR_PAIR(1));
-  fprintf(stdout, "INITIALIZED CURSES\n");
-  fflush(stdout);
 }
 
 /* ************ display_map *********************** */
@@ -316,7 +361,113 @@ initialize_curses()
 static void
 display_map(char* display)
 {
-  // clear output
+  // move chars from display to ncurses
+  for (int row = 0; row < NROWS; row++) {
+    for (int col = 0; col < NCOLS; col++) {
+      move(row+1,col);                          // CURSES, +1 account for info line
+      int idx = row * (NCOLS+1) + col;
+      if (idx < strlen(display)) {                
+        addch(display[idx]);  // CURSES
+      } else {
+        addch(' ');                             // fill with blank
+      }
+    }
+  }
+  refresh();                                    // CURSES
+
+  // /* clear previous temp message */
+  // int max_nrows = 0; //dummy
+  // int max_ncols = 0;
+  // int loc = 0;
+  // getmaxyx(stdscr, max_nrows, max_ncols);
+  // // clear dummy variable
+  // (void)max_nrows;
+  // // clear temp status messages
+  // for (loc = 0; loc < max_ncols; loc++) {
+  //   char c = mvinch(0, loc) & A_CHARTEXT;
+  //   if (c == '.') {
+  //     loc++;
+  //     break;
+  //   }
+  // }
+  // char line[max_ncols];
+  // mvinnstr(0, 0, line, max_ncols);
+  // bool refresh = (line != NULL) && (strstr(line, "unknown") != NULL);
+  // // ensure stop character was found
+  // if (loc != 0) {
+  //   while(loc < max_ncols) {
+  //     move(0, loc++);
+  //     addch(' ');
+  //   }
+  // }
+  // // if clear is required, clear
+  // if (refresh) {
+  //   refresh();
+  // }
+}
+
+/* ************ clear_temp_message ************* */
+/* display temp string after gold status message   */
+static void
+clear_temp_message()
+{
+  /* clear previous temp message */
+  int max_nrows = 0; //dummy
+  int max_ncols = 0;
+  int loc = 0;
+  getmaxyx(stdscr, max_nrows, max_ncols);
+  // clear dummy variable
+  (void)max_nrows;
+  // clear temp status messages
+  for (loc = 0; loc < max_ncols; loc++) {
+    char c = mvinch(0, loc) & A_CHARTEXT;
+    if (c == '.') {
+      loc++;
+      break;
+    }
+  }
+  if (loc != 0) {
+    while(loc < max_ncols) {
+      move(0, loc++);
+      addch(' ');
+    }
+  }
+  refresh();
+}
+
+/* ************ display_temp_message ************* */
+/* display temp string after gold status message   */
+static void
+display_temp_message(const char* temp)
+{
+  int max_nrows = 0; //dummy
+  int max_ncols = 0;
+  int loc = 0;
+  getmaxyx(stdscr, max_nrows, max_ncols);
+  // clear dummy variable
+  (void)max_nrows;
+  // clear temp status messages
+  for (loc = 0; loc < max_ncols; loc++) {
+    char c = mvinch(0, loc) & A_CHARTEXT;
+    if (c == '.') {
+      loc++;
+      break;
+    }
+  }
+
+  // if new temp message is needed
+  if (temp != NULL) {
+    mvprintw(0,loc+1, "%.*s", max_ncols-(loc+2), temp);
+  }
+  refresh();
+}
+
+/* ************ init_map *********************** */
+/* fills ncurses screen with bank character ' '  */
+static void
+init_map()
+{
+  // blank map
   int max_nrows = 0;
   int max_ncols = 0;
   getmaxyx(stdscr, max_nrows, max_ncols);
@@ -326,16 +477,5 @@ display_map(char* display)
       addch(' ');                               // fill with blank
     }
   }
-  for (int row = 0; row < NROWS; row++) {
-    for (int col = 0; col < NCOLS; col++) {
-      move(row+1,col);                          // CURSES, +1 account for info line
-      int idx = row * NCOLS + col;
-      if (idx < strlen(display)) {                
-        addch(display[row * NCOLS + col]);      // CURSES
-      } else {
-        addch(' ');                             // fill with blank
-      }
-    }
-  }
-  refresh();                                    // CURSES
+  refresh();
 }

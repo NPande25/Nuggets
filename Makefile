@@ -35,6 +35,7 @@ client.o: $S/message.h
 test: 
 
 valgrind: 
+	$(VALGRIND) ./server maps/visdemo.txt 5
 
 clean:
 	rm -f core

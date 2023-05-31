@@ -1,7 +1,10 @@
 /*
 * server.c     May 22, 2023
 *
-*
+* This file contains the code for the server, which handles all processes for
+* the Nuggets game. It receives messages from client and calls the appropriate functions
+* to adjust the game map, players, and more. When the game is over (all the gold is collected),
+* the server sends all clients a game summary.
 */
 
 #include <stdio.h>
@@ -107,6 +110,8 @@ main (const int argc, char* argv[])
 
     // shut down the message module
     message_done();
+
+    printf("game finished\n");
 
     // clear memory for grid and players
     grid_delete(gameMap);
@@ -215,6 +220,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
 
     if (game.numGold == 0) {
         gameOver();
+        return true;
     }
 
     return false;
@@ -553,6 +559,7 @@ updatePlayers()
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
         message_send(player_get_addr(curPlayer), displayMsg);
+        mem_free(gridString);
         mem_free(displayMsg);
     }
 }
@@ -577,6 +584,7 @@ updateSpectator()
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
         message_send(game.spect, displayMsg);
+        mem_free(gridString);
         mem_free(displayMsg);
     }
 }
