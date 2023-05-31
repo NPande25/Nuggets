@@ -18,7 +18,7 @@
 typedef struct player {
   bool* boolGrid;       // personal map of what they can see
   char c;               //what character they are
-  char* name;           //what they say their name is
+  const char* name;           //what they say their name is
   int score;            //current score
   int x;                //location
   int y;                //location
@@ -32,7 +32,7 @@ int player_get_y(player_t* player);
 
 
 
-player_t* player_new(char c, char* name, addr_t addr, int NR, int NC) {                               //note: should they get a grid loaded in?
+player_t* player_new(char c, const char* name, addr_t addr, int NR, int NC) {                               //note: should they get a grid loaded in?
 
     player_t* player = mem_malloc(sizeof(player_t));
 
@@ -74,12 +74,26 @@ void player_playerVisibility(player_t* player, grid_t* grid)
 
 
     for (int i = 0; i < grid_get_NC(grid) * grid_get_NR(grid); i++) {
+
       if (!player->boolGrid[i]) { // if it's false in the bool grid (we don't have to worry about true, can't turn to false)
         gridcell_t* g1 = grid_get_gridarray(grid, i);
         bool show = grid_isVisible(grid, g, g1); // check visibility
+        printf("(%d, %d): show = %d, wall = %d, character: %c\n", gridcell_getX(g1), gridcell_getY(g1), show, gridcell_isWall(g1), gridcell_getC(g1));
         player->boolGrid[i] = show; // set that in the boolGrid
       }
     }
+  }
+
+  bool* testgrid = player->boolGrid;
+  int total = 0;
+  for (int i = 0; i<grid_get_NR(grid); i++){
+    int cnt = 0;
+    while(cnt<grid_get_NC(grid)){
+      cnt++;
+      printf("%d ", testgrid[total]);
+      total++;
+    }
+    printf("\n");
   }
 }
 
@@ -110,7 +124,7 @@ char player_get_c(player_t* player) {
   }
 }
 
-char* player_get_name(player_t* player) {
+const char* player_get_name(player_t* player) {
 
   if (player != NULL && player->name != NULL) {
     return player->name;
@@ -215,18 +229,21 @@ void player_deactivate(player_t* player) {
 }
 
 char* player_get_string(player_t* player, grid_t* grid) {
+  printf("add\n");
 
   int totalCells = (grid_get_NC(grid)) * (grid_get_NR(grid));
   char* map = mem_malloc(sizeof(char) * (totalCells + grid_get_NR(grid)) + 1);
   int index = 0;
-  for (int i; i < totalCells; i++) {
+  printf("totalCells: %d\n", totalCells);
+
+  for (int i = 0; i < totalCells; i++) {
 
     gridcell_t* cell = (grid_get_gridarray(grid, i));                       //new getter needed
     char c = gridcell_getC(cell);
 
     //if cell has been seen
     if (player_get_boolGrid(player, i)) {
-
+      printf("%c ",c);
       if (c == '*') {
 
         bool stillVis = grid_isVisible(grid, grid_get(grid, player_get_x(player), player_get_y(player)), cell);
@@ -241,18 +258,22 @@ char* player_get_string(player_t* player, grid_t* grid) {
         map[index] = c;
       }
     } else {
+      printf("0 ");
       map[index] = ' ';
     }
     index++;
 
     //at end of row?
     if (((i+1) % grid_get_NC(grid)) == 0) {
+      printf("\n");
       map[index] = '\n';
       index++;
     }
   }
 
   map[index] = '\0';
+
+  printf("%s", map);
 
   return map;
 

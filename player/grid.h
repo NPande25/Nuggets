@@ -41,6 +41,8 @@ typedef struct grid grid_t;
  */
 grid_t* grid_new();
 
+char* grid_get_map(grid_t* grid);
+
 /******* grid_get_NR ******
  * get number of rows
  * input: grid of interest
