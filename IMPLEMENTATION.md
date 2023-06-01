@@ -54,7 +54,7 @@ if player is active
            change char in old position to '.' or '*'
            return true
 return false
-
+```
 
 > ---
 
