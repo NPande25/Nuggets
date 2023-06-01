@@ -180,93 +180,55 @@ The first argument is the pathname for a map file and the second argument is an 
 ### Functional decomposition into modules
 
 We anticipate the following modules or functions:
-*main*, which parses arguments and initializes other modules
-*parseArgs*, which parses the command-line arguments
-*initializeGame*, which sets up the data structures, including dropping gold randomly in the map, initializes message module and announces port number and accepts messages from clients
-*message_loop*, which processes messages from clients
-*updatePlayers*, which updates all players whenever any player moves or gold is collected
-*updateClients*, which sends out updated map to all active clients after any player move
-*gameOver*, which sends out a summary that includes player names and scores when game is over
+`main` accepts command-line arguments, initializes global gameData variable, initializes the message module, and calls the message_loop function.
+`parseArgs` parses and validates the command-line arguments, extracting the map file name and seed if given.
+`handleMessage` handles incoming messages from clients and calls appropriate methods based on game logic.
+`addPlayer` creates a new player and adds them to the player array in the global gameData struct.
+`addSpectator` creates a spectator and stores their client address in the global gameData struct.
+`handleKey` uses switch cases to pass appropriate parameters to moveOnMap based on which key player presses and where they want to move.
+`moveOnMap` changes the game map based on parameters passed to it by handleKey.
+`handleQuit` deactivates a player or spectator if they press the "Q" key.
+`dropGold` drops a random number of gold piles (between minimum and maximum number of gold piles) in the map.
+`updatePlayers` sends GOLD and DISPLAY messages to the clients of all the players.
+`updateSpectator` sends GOLD and DISPLAY messages to the spectator if there is one.
+`gameOver` creates the game summary and sends it as a message to all clients.
+
 
 ### Pseudo code for logic/algorithmic flow
-
-parseArgs
-```
-initialize file using map file name
-if file exists
-close file
-else
-log error and exit nonzero
-
-if seed is given
-save seed value
-```
-
-initializeGame
-```
-create array of players
-create and initialize map using mapfile
-drop gold into random positions in map
-
-while there is still gold left in the map
-	wait for messages sent from clients
-	call processMsg
-
-call sendSummary to print game over summary
-```
-message_loop
-```
-if player moves
-	store players new position
-check if score changed (player found gold)
-update main map
-if player leaves
-deactivate player 
-call updatePlayers
-call updateClients
-```
-
-updatePlayers
-```
-for all players in game
-update map, scores, and positions
-```
-
-updateClients
-```
-for all player in game
-send map or message to client and display
-```
-
-gameOver
-```
-print game over message
-for all players in game
-print player details
-```
 
 The server will run as follows:
 
 	execute from a command line per the requirement spec
 	parse the command line, validate parameters
-	call initializeGame() to set up data structures
+	to set up data structures
 	initialize the 'message' module
 	print the port number on which we wait
 	call message_loop(), to await clients
 	call gameOver() to inform all clients the game has ended
 	clean up
 
-#### initializeGame()
-initializeGame sets up grid and drops gold piles into random cells. See IMPLEMENTATION.md for the pseudocode.
-
 #### handMessage()
-handleMessage determines what the program will do based on the user keystrokes. See IMPLEMENTATION.md for pseudocode.
+```
+if message begins with "PLAY "
+	parse player name
+	call addPlayer
+else if message begins with "SPECTATE "
+	call addSpectator
+else if message begins with "KEY "
+	parse keystroke
+	if client address if not spectator
+		use address to identify player that sent message by looping through player array
+		call handleKey, passing the moving player and keystroke
+		update player's visibility
+	else
+		check if keystroke is "Q" for quit
+		handle quit for spectator
+```
 
 ### Major data structures
-Grid
-GridCell
-Player
-Client
+`grid_t`: used to store the master grid.
+`gridcell_t`: used to store data for each grid cell in the grid.
+`player_t`: used to create player array and store data for game players.
 
 ## grid_t
 
