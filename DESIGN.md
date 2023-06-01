@@ -14,12 +14,27 @@ In this document, we discuss our design decisions for the CS50 Nuggets game, whi
 Our design includes modules for `grid`, `gridcell`, and `player`. We describe each program and module separately. We do not describe the `support` library nor the modules that enable features that go beyond the spec. We avoid repeating information that is provided in the requirements spec.
 
 According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
-=======
-According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
 Our design also includes `player`, `grid`, and `gridcell` modules.
 We describe each program and module separately.
 We do not describe the `support` library nor the modules that enable features that go beyond the spec.
 We avoid repeating information that is provided in the requirements spec.
+
+# CS50
+## Design Spec
+### CecsC, Spring, 2023
+
+In this document, we discuss our design decisions for the CS50 Nuggets game, which are independent of the implementation. The Design spec may include many features, but here we focus on the main subset:
+*Assumptions
+*User interface (including command-line parameters and stdin/stdout/graphical interface);
+*Inputs and outputs
+*Functional decomposition into modules
+*Pseudo code (plain English-like language) for logic/algorithmic flow
+*Major data structures
+*Testing plan, including unit tests, integration tests, system tests.
+
+Our design includes modules for `grid`, `gridcell`, and `player`. We describe each program and module separately. We do not describe the `support` library nor the modules that enable features that go beyond the spec. We avoid repeating information that is provided in the requirements spec.
+
+According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
 
 ## Client
 
@@ -30,7 +45,7 @@ The *client* acts in one of two modes:
 
 ### User interface
 
-The user will see a display, the top line of which shall provide game status, and the rest of the rows will display the game state from the client’s perspective. 
+The user will see a CURSES display, the top line of which shall provide game status, and the rest of the rows will display the game state from the client’s perspective. 
 
 The user interfaces with the game by sending keystrokes input through stdin.
 
@@ -92,7 +107,10 @@ Terminal Display: Outputs the sections of the map that is visible to the player 
 
 ### Logging
 
-When an event occurs, it will be sent to stderr anf logged to a file. Logged events are meaningful events for debugging: a client joining the server, a client finding a gold nugget, and a client leaving the server.
+When evoked with the syntax ./client 2>player.log, important messages for understanding the bahviour of the client are logged to player.log. Logging to an external file is the recommended way to launch the client, to avoid error messages appearing on screen.
+
+Instead, critical information for gameplay, including certain errors, are logged as temporary messages to the status line on the top of the screen.
+
 When the game terminates, or an error arises, the log file is saved.
 
 ### Functional decomposition into modules
@@ -100,6 +118,7 @@ When the game terminates, or an error arises, the log file is saved.
 Modules:
 
 * message module (included): facilitates sending client input from stdin to the server
+* ncurses module (included): facilitates writing and reading from a screen
 
 There are no othe modules other than the main module, facilitating functionality for player operations and differentiating between player & spectator functionality
  
@@ -109,41 +128,37 @@ The client will run as follows:
 
 	execute from a command line per the requirement spec
 	parse the command line, validate parameters
-	call initialize_client() to initialize required modules
-		initialize the 'message' module
-		verifies screen as per requirements 
-	call connect_client()
-		call message_send() to connect to server at port received
-	call message_loop() to handle incoming messages from server	
-		call handleInput(), await key strokes from player
-			call message_send() to send clean keystrokes to server
-		call handleMessage() to print grid and client info to terminal
-	terminate modules and clean up
-
-#### initialize_client()
-```
-  initializes the `message` module
-  verify screen is sufficient for display as per requirments
-```
-#### conncet_client()
-```
-  sends message to server to verify connection, connecting at the specified port, and sends player name and type (player or spectator)
-```
-#### message_loop()
-```
-  while termination from server or user not recieved 
-	  takes handleInput() as a parameter to parse and send inputs to server
-  calls handleMessage() to print server messages to terminal such as game critical info and the grid
-```
+	Initialize global data variable
+	If playername is present
+		Send player message to server
+	else
+		Send spectator message to server
+	evoke message look with handleInput, and handleMessage
+	Free memory of data
+	endwin, close curses
+	message_done, close message
 
 #### handleInput()
-```
-  reads from stdin one line up to the maximum message length specified in requirements
-  calls message_send() to send keystroke to server
-```
+
+	reads a single character input from stdin without delay
+	clears UI screen’s top line
+	sends char as a key message to the server
+
+#### handleMessage()
+
+	verifies parameters
+	sorts incoming message form server by type:
+	If the type is valid (OK, GRID, GOLD, DISPLAY, ERROR, QUIT)
+		evoke corresponding handle helper function to update UI
+	else
+		Ignore the malformed message and log it for debugging
+
+	In case of a terminal error, break the message loop
+
+
 ### Major data structures
 
-There are no major data structures in client outside of the c-library.
+There is one data struct included, a global static variable called data. This struct contains three primitive data types which store important information that needs to be remembered between message loops such as screen info and the player’s assigned symbol.
 
 ---
 
