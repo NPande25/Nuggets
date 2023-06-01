@@ -44,6 +44,7 @@ struct gameData {
     int numGold;
     int numRows;
     int numCols;
+    addr_t justFoundGold;
 };
 
 static struct gameData game; //global variable for game data
@@ -111,8 +112,6 @@ main (const int argc, char* argv[])
     // shut down the message module
     message_done();
 
-    printf("game finished\n");
-
     // clear memory for grid and players
     grid_delete(gameMap);
     for(int i = 0; i<game.numPlayers; i++){
@@ -178,7 +177,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
     if (strncmp(message, "PLAY ", strlen("PLAY ")) == 0) {
         const char* playerName = message + strlen("PLAY ");
         addPlayer(from, playerName);
-        //printf("PLAY: %s\n", playerName);
+        printf("PLAY: %s\n", playerName);
     } 
     else if (strncmp(message, "SPECTATE", strlen("SPECTATE")) == 0) {
         addSpectator(from);
@@ -197,13 +196,14 @@ handleMessage(void* arg, const addr_t from, const char* message)
                 }
             }
 
+            //move player on master grid
             handleKey(mover, keystroke);
 
             //update player visibility
             player_playerVisibility(mover, game.map);
         }
         else {
-            printf("from spectate\n");
+            //spectator can only quit
             if (strcmp(keystroke, "Q") == 0) {
                 player_t* playerSpect = player_new('.', "SPECTATOR", from, game.numRows, game.numCols);
                 handleQuit(playerSpect);
@@ -212,6 +212,7 @@ handleMessage(void* arg, const addr_t from, const char* message)
         }
     }
     else {
+        fprintf(stderr, "ERROR: malformed message");
         message_send(from, "ERROR malformed message\n");
     }
 
@@ -239,30 +240,33 @@ addPlayer(addr_t from, const char* name)
     printf("name: %s\n", name);
 
     const int maxPlayers = 26;
-   // const int maxNameLength = 50; //max number of chars in player's name
 
     if (game.numPlayers == maxPlayers-1) {
         message_send(from, "QUIT Game is full: no more players can join.");
     }
+    else if (name == NULL) {
+        message_send(from, "QUIT Sorry - you must provide player's name.");
+    }
     else { //create new player and add to array of players
         
-        //truncate name
-      /*  int length = strlen(name);
-        if (length > maxNameLength) {
-            name[maxNameLength] = '\0';
-        }*/
+        //truncate name and replace invalid characters with '_'
+        char newName[60];
+        sprintf(newName, "%.50s", name); //max name length is 50 characters
+        int length = strlen(newName);
+        for (int i = 0; i < length; i++) {
+            if (!isgraph(newName[i]) && !isblank(newName[i])) {
+                newName[i] = '_';
+            }
+        }
 
         //get player letter
         int curNumPlayers = game.numPlayers;
         char playerLetter = 'A' + curNumPlayers;
 
         //create new player
-        player_t* newPlayer = player_new(playerLetter, name, from, game.numRows, game.numCols);
+        player_t* newPlayer = player_new(playerLetter, newName, from, game.numRows, game.numCols);
         
         if (newPlayer != NULL) {
-            //update player visibility
-            player_playerVisibility(newPlayer, game.map);
-
             game.allPlayers[game.numPlayers] = newPlayer;   
             game.numPlayers++;
 
@@ -276,7 +280,7 @@ addPlayer(addr_t from, const char* name)
             sprintf(gridMsg, "GRID %d %d\n", game.numRows, game.numCols);
             message_send(from, gridMsg);
 
-             //drop player in randomly selected room spot in map
+            //drop player in randomly selected room spot in map
             bool dropped = false;
             while (!dropped) {
                 int x = rand() % (game.numCols);
@@ -289,6 +293,9 @@ addPlayer(addr_t from, const char* name)
                     dropped = true;
                 }
             }
+
+            //update player visibility
+            player_playerVisibility(newPlayer, game.map);
         }
     }
 }
@@ -351,34 +358,51 @@ handleKey(player_t* player, const char* key)
         moveOnMap(player, player_get_x(player)+1, player_get_y(player)+1);
         break;
      case 'H': 
-        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player))){}
+        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player))){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'L': 
-        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player))){}
+        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player))){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'J': 
-        while(moveOnMap(player, player_get_x(player), player_get_y(player)+1)){}
+        while(moveOnMap(player, player_get_x(player), player_get_y(player)+1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'K': 
-        while(moveOnMap(player, player_get_x(player), player_get_y(player)-1)){}
+        while(moveOnMap(player, player_get_x(player), player_get_y(player)-1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'Y': 
-        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player)-1)){}
+        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player)-1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'U': 
-        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)-1)){}
+        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)-1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'B': 
-        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player)+1)){}
+        while(moveOnMap(player, player_get_x(player)-1, player_get_y(player)+1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'N': 
-        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)+1)){}
+        while(moveOnMap(player, player_get_x(player)+1, player_get_y(player)+1)){
+            player_playerVisibility(player, game.map);
+        }
         break;
     case 'Q':
         handleQuit(player);
         break;
     default:
-        message_send(player_get_addr(player), "ERROR: unknown keystroke");
+        fprintf(stderr, "ERROR usage: unknown keystroke");
+        message_send(player_get_addr(player), "ERROR usage: unknown keystroke");
         break;
     }
 }
@@ -403,9 +427,8 @@ moveOnMap(player_t* player, int newX, int newY)
         }
         else {
             char newChar = gridcell_getC(newCell);
-            printf("curChar: %c, newChar: %c\n", curChar, newChar);
-            int checkLetter = newChar - 'A';
-            if(isupper(newChar)) { //if(checkLetter >= 0 && checkLetter <=25) {
+            if(isupper(newChar)) { 
+                int checkLetter = newChar - 'A';
                 player_t* otherPlayer = game.allPlayers[checkLetter];
                 grid_set(game.map, curX, curY, newChar); 
                 player_set_x(otherPlayer, curX);
@@ -414,8 +437,6 @@ moveOnMap(player_t* player, int newX, int newY)
                 grid_set(game.map, newX, newY, curChar); 
                 player_set_x(player, newX);
                 player_set_y(player, newY);
-
-                printf("moved letter\n");
 
                 return true;
             }
@@ -438,8 +459,8 @@ moveOnMap(player_t* player, int newX, int newY)
                 char goldMsg[100];
                 sprintf(goldMsg, "GOLD %d %d %d\n", pileGold, player_get_score(player), game.numGold);
                 message_send(player_get_addr(player), goldMsg);
+                game.justFoundGold = player_get_addr(player);
 
-                printf("moved gold\n");
                 return true;
             }
             else if (newChar == '.' || newChar == '#') {
@@ -454,7 +475,6 @@ moveOnMap(player_t* player, int newX, int newY)
                     grid_set(game.map, curX, curY, '#');
                 }
 
-                printf("moved room/hall\n");
                 return true;
             }
         }
@@ -462,6 +482,7 @@ moveOnMap(player_t* player, int newX, int newY)
 
     return false;
 }
+
 
 /**************** handleQuit ****************/
 /* Recieves a player that sent quit command
@@ -477,10 +498,22 @@ handleQuit(player_t* player)
         message_send(game.spect, "QUIT Thanks for watching!");
     }
     else {
+        //remove player's symbol from map
+        int curX = player_get_x(player);
+        int curY = player_get_y(player);
+        gridcell_t* curCell = grid_get(game.map, curX, curY);
+        if(gridcell_getRoom(curCell)) {
+            grid_set(game.map, curX, curY, '.');
+        }
+        else {
+            grid_set(game.map, curX, curY, '#');
+        }
+
         player_deactivate(player);
         message_send(player_get_addr(player), "QUIT Thanks for playing!");
     }
 }
+
 
 /**************** dropGold ****************/
 /* Drops gold at random locations of the grid. Drops a random number of piles
@@ -532,6 +565,7 @@ dropGold()
     }
 }
 
+
 /**************** updatePlayers ****************/
 /* Loops through players and sends GOLD and DISPLAY messages to their clients.
 */
@@ -544,17 +578,17 @@ updatePlayers()
         if(curPlayer == NULL){
             printf("player is null\n");
         }
-        //send GOLD message to players
-        char goldMsg[100];
-        int score = player_get_score(curPlayer);
-        sprintf(goldMsg, "GOLD %d %d %d\n", 0, score, game.numGold);
-        message_send(player_get_addr(curPlayer), goldMsg);
-        
-        printf("gold sent\n");
 
+        if (!message_eqAddr(game.justFoundGold, player_get_addr(curPlayer))) {
+            //send GOLD message to players
+            char goldMsg[100];
+            int score = player_get_score(curPlayer);
+            sprintf(goldMsg, "GOLD %d %d %d\n", 0, score, game.numGold);
+            message_send(player_get_addr(curPlayer), goldMsg);
+        }
+        
         //send DISPLAY message to players
         char* gridString = player_get_string(curPlayer, game.map);
-        printf("message sent\n");
         char* displayMsg = mem_malloc((sizeof(char) * strlen(gridString)) + 10);
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
@@ -584,7 +618,7 @@ updateSpectator()
         strcpy(displayMsg, "DISPLAY\n");
         strcat(displayMsg, gridString);
         message_send(game.spect, displayMsg);
-        mem_free(gridString);
+        //mem_free(gridString);
         mem_free(displayMsg);
     }
 }
@@ -603,16 +637,20 @@ gameOver()
     for (int i = 0; i<game.numPlayers; i++) {
         player_t* curPlayer = game.allPlayers[i];
         char playerData[50];
-       
-        printf("name: %s\n", player_get_name(curPlayer));
-        printf("char: %c\n", player_get_c(curPlayer));
-        printf("score: %d\n", player_get_score(curPlayer));
-        sprintf(playerData, "%-3c %7d\n", player_get_c(curPlayer), player_get_score(curPlayer));
+        sprintf(playerData, "%-3c %7d %s\n", player_get_c(curPlayer), player_get_score(curPlayer), player_get_name(curPlayer));
         strcat(gameOverMsg, playerData);
     }
+
+    //print summary
+    printf("%s", gameOverMsg);
 
     //send game over message to all players
     for (int i = 0; i<game.numPlayers; i++) {
         message_send(player_get_addr(game.allPlayers[i]), gameOverMsg);
+    }
+
+    //send game over message to spectator
+    if (game.hasSpect) {
+        message_send(game.spect, gameOverMsg);
     }
 }
