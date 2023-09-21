@@ -1,40 +1,16 @@
-# CS50
-## Design Spec
-### CecsC, Spring, 2023
-
-In this document, we discuss our design decisions for the Nuggets game, which are independent of the implementation. The Design spec may include many features, but here we focus on the main subset:
-*Assumptions
-*User interface (including command-line parameters and stdin/stdout/graphical interface);
-*Inputs and outputs
-*Functional decomposition into modules
-*Pseudo code (plain English-like language) for logic/algorithmic flow
-*Major data structures
-*Testing plan, including unit tests, integration tests, system tests.
-
-Our design includes modules for `grid`, `gridcell`, and `player`. We describe each program and module separately. We do not describe the `support` library nor the modules that enable features that go beyond the spec. We avoid repeating information that is provided in the requirements spec.
-
-According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
-Our design also includes `player`, `grid`, and `gridcell` modules.
-We describe each program and module separately.
-We do not describe the `support` library nor the modules that enable features that go beyond the spec.
-We avoid repeating information that is provided in the requirements spec.
-
-# CS50
-## Design Spec
-### CecsC, Spring, 2023
+# Design Spec
+## June 2023
 
 In this document, we discuss our design decisions for the CS50 Nuggets game, which are independent of the implementation. The Design spec may include many features, but here we focus on the main subset:
-*Assumptions
-*User interface (including command-line parameters and stdin/stdout/graphical interface);
-*Inputs and outputs
-*Functional decomposition into modules
-*Pseudo code (plain English-like language) for logic/algorithmic flow
-*Major data structures
-*Testing plan, including unit tests, integration tests, system tests.
+* Assumptions
+* User interface (including command-line parameters and stdin/stdout/graphical interface);
+* Inputs and outputs
+* Functional decomposition into modules
+* Pseudo code (plain English-like language) for logic/algorithmic flow
+* Major data structures
+* Testing plan, including unit tests, integration tests, system tests.
 
 Our design includes modules for `grid`, `gridcell`, and `player`. We describe each program and module separately. We do not describe the `support` library nor the modules that enable features that go beyond the spec. We avoid repeating information that is provided in the requirements spec.
-
-According to the [Requirements Spec](REQUIREMENTS.md), the Nuggets game requires two standalone programs: a client and a server.
 
 ## Client
 
