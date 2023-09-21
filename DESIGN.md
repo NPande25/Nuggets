@@ -1,7 +1,7 @@
 # Design Spec
 ## June 2023
 
-In this document, we discuss our design decisions for the CS50 Nuggets game, which are independent of the implementation. The Design spec may include many features, but here we focus on the main subset:
+In this document, we discuss our design decisions for the Nuggets game, which are independent of the implementation. The Design spec may include many features, but here we focus on the main subset:
 * Assumptions
 * User interface (including command-line parameters and stdin/stdout/graphical interface);
 * Inputs and outputs
