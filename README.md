@@ -13,3 +13,6 @@ When all gold nuggets are collected, the game ends and a summary is printed.
 See the [Implementation Spec](IMPLEMENTATION.md) for implementation details, including in-depth pseudocode for relevant functions
 
 See the [Design Spec](DESIGN.md) for design details, including overall functional decomposition and major data structures.
+
+## Materials
+To assist with this game, we used support libraries from Dartmouth's *CS50: Software Design & Implementation*. These include the [Support](support/) library and the [libcs50](libcs50/) library.
