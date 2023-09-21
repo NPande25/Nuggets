@@ -9,11 +9,7 @@ We describe each program and module separately.
 We do not describe the `support` library nor the modules that enable features that go beyond the spec.
 We avoid repeating information that is provided in the requirements spec.
 
-
-> **Extra Credit:**
-The additional functionality is as follows:
-
-
+### Bonus Functionality
 As a non-spectator player of the game, if you "step" on top of another player's character, you steal 10% of their gold that they have, none if they have no gold. It also displays a message to both the theif and the victim, detailing how much gold was stolen, and their remaining total gold.
 
 
@@ -57,21 +53,6 @@ return false
 ```
 
 > ---
-
-
-
-
-## Plan for division of labor
-
-
-We have 4 group members, Nikhil, Andy, Kyrylo, and Logan.
-
-
-Nikhil is responsible for the grid and gridcell modules, focusing on the visibility aspect of the game. Logan is responsible for the player module, and to assist Nikhil with the grid module. Kyrylo will be responsible for the client, and Andy will be in charge of designing the server.
-
-
-Nikhil, Andy, and Kyrylo will be testing while Logan works on the support and documentation.
-
 
 ## Player
 
